@@ -1,16 +1,34 @@
-# This is a sample Python script.
+from collections import deque
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from network.flow_gen import OnOffFlowGenerator
+from network.netqueue import NetQueue
+from network.network import Network
+from network.packet import Packet
+from matplotlib import pyplot as plt
+import numpy as np
+a = Network()
+
+a.reset()
+
+for i in range(5000):
+    a.step()
+    print("-----------------------------------------")
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
+index = []
+enqueue = []
+served = []
+dropped = []
+sizes = []
+for  (step, temp_total_enqueued, temp_total_served, temp_total_dropped, size) in a.slices[1].stats:
+    index.append(step)
+    enqueue.append(temp_total_enqueued)
+    served.append(temp_total_served)
+    dropped.append(temp_total_dropped)
+    sizes.append(size)
+print(sizes)
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+plt.plot(index, served)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+plt.show()
