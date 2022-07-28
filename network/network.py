@@ -8,46 +8,37 @@ from network.netqueue import NetQueue
 class Network:
 
     def __init__(self):
-        self.uniformconf = [
+
+        self.slice_0_flows = [
             {
                 "packet_size": 512,
-                "req_delay": 10.0,
+                "req_delay": 300,
                 "max_delay": np.infty,
-                "rate": 64000,
-                "flow_class": 'audio',
+                "rate": 384000,
+                "flow_class": 'non-critical-audio',
                 "flow_model": 'unicast',
                 "flow_performance": 'strict',
                 "slice": 0
             },
             {
                 "packet_size": 512,
-                "req_delay": 30.0,
+                "req_delay": 300,
                 "max_delay": np.infty,
                 "rate": 384000,
-                "flow_class": 'video',
+                "flow_class": 'non-critical-audio',
                 "flow_model": 'unicast',
-                "flow_performance": 'linear',
-                "slice": 0
-            },
-            {
-                "packet_size": 512,
-                "req_delay": 30.0,
-                "max_delay": np.infty,
-                "rate": 384000,
-                "flow_class": 'video',
-                "flow_model": 'unicast',
-                "flow_performance": 'linear',
+                "flow_performance": 'strict',
                 "slice": 0
             }
 
         ]
 
-        self.onoffconfs = [
+        self.slice_1_flows = [
             {
                 "packet_size": 512,
                 "req_delay": 7.5,
                 "max_delay": 7.5,
-                "rate": 64000,
+                "rate": 384000,
                 "flow_class": 'critical-audio',
                 "flow_model": 'unicast',
                 "flow_performance": 'strict',
@@ -73,10 +64,10 @@ class Network:
 
         self.generators = []
 
-        for conf in self.onoffconfs:
+        for conf in self.slice_0_flows:
             self.generators.append(OnOffFlowGenerator(**conf))
 
-        for conf in self.uniformconf:
+        for conf in self.slice_1_flows:
             self.generators.append(UniformFlowGenerator(**conf))
 
     def step(self, action=None):

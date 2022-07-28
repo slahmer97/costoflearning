@@ -12,3 +12,9 @@ class SimGlobals:
 
     audio_bitrate = [4000, 25000]  # [b/s]
     video_bitrate = [32000, 384000]  # [b/s]
+
+    # Probabilities TODO tobe changed
+    P00 = 0.1
+    P01 = 0.9
+    P11 = 0.5
+    P10 = 0.5
