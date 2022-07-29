@@ -15,7 +15,8 @@ class Packet:
         self.size = size  # in bit
 
     def is_dead(self):
-        max_timeslots = self.max_delay / SimGlobals.NET_TIMESLOT_DURATION
+        #max_timeslots = self.max_delay / SimGlobals.NET_TIMESLOT_DURATION
         #print("{} <= {}".format(SimGlobals.NET_TIMESLOT_STEP - self.generated_at, max_timeslots))
-        assert SimGlobals.NET_TIMESLOT_STEP - self.generated_at <= max_timeslots
+        #assert SimGlobals.NET_TIMESLOT_STEP - self.generated_at <= max_timeslots
+        return False
         return SimGlobals.NET_TIMESLOT_STEP - self.generated_at >= max_timeslots

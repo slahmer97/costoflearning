@@ -10,13 +10,15 @@ class ActiveUsers:
         self.process_name = process_name
         self.max_users = max_users
         self.transitions = np.zeros(shape=(max_users + 1, max_users + 1))
+        self.current_state = None
+        self.states = np.array([i for i in range(self.max_users + 1)])
 
         for i in range(0, max_users + 1):
             sum = 0
             for j in range(0, max_users + 1):
                 self.transitions[i][j] = self.get_prob(j, i)
                 sum += self.transitions[i][j]
-            print(sum)
+            #print(sum)
         # print(self.transitions)
         self.mc = MarkovChain(self.transitions,
                               ['{}{}'.format(self.process_name, i) for i in range(0, self.max_users + 1)])
@@ -34,9 +36,13 @@ class ActiveUsers:
             sum += term1 * term2
         return sum
 
-    def display(self):
-        plot_graph(self.mc)
-        plt.show()
+    def reset(self):
+        self.current_state = np.random.choice(self.states, p=self.mc.steady_states[0])
+        return self.current_state, self.transitions[self.current_state]
+
+    def step(self):
+        self.current_state = np.random.choice(self.states, p=self.transitions[self.current_state])
+        return self.current_state, self.transitions[self.current_state]
 
     def get_mean(self):
         steady_state = self.mc.steady_states[0]
@@ -45,15 +51,17 @@ class ActiveUsers:
         return ret
 
     def simulate(self):
-        states = np.array([i for i in range(self.max_users + 1)])
-        current_state = np.random.choice(states, p=self.mc.steady_states[0])
+        current_state = np.random.choice(self.states, p=self.mc.steady_states[0])
         history = [current_state]
         index = [0]
         for i in range(1, 1000):
-            current_state = np.random.choice(states, p=self.transitions[current_state])
+            current_state = np.random.choice(self.states, p=self.transitions[current_state])
             history.append(current_state)
             index.append(i)
 
         plt.plot(index, history)
+        plt.show()
 
+    def display(self):
+        plot_graph(self.mc)
         plt.show()

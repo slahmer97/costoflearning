@@ -7,7 +7,7 @@ from collections import deque
 class NetQueue():
     def __init__(self, maxsize=1500):
         self.queue = deque(maxlen=maxsize)
-        self.allocated_resources = 1
+        self.allocated_resources = 5
 
         # perm stats
         self.perm_total_enqueued = 0
@@ -39,13 +39,16 @@ class NetQueue():
     def get(self) -> Packet:
         return self.queue.popleft()
 
+    def __len__(self):
+        return len(self.queue)
+
     def step(self):
         self.update_dead_packets()
-        available_bandwidth = SimGlobals.NET_TIMESLOT_DURATION * 0.001 * self.allocated_resources * SimGlobals.BANDWIDTH_PER_RESOURCE
+        available_bandwidth = SimGlobals.NET_TIMESLOT_DURATION_S * self.allocated_resources * SimGlobals.BANDWIDTH_PER_RESOURCE
         count = 0
         while available_bandwidth > 0 and not self.empty():
             count += 1
-            self.temp_total_served +=1
+            self.temp_total_served += 1
             self.perm_total_served += 1
             served_packet = self.get()
             available_bandwidth -= served_packet.size
@@ -81,7 +84,8 @@ class NetQueue():
 
     def reset_temp_stats(self):
         self.stats.append(
-            (SimGlobals.NET_TIMESLOT_STEP, self.temp_total_enqueued, self.temp_total_served, self.temp_total_dropped, len(self.queue)))
+            (SimGlobals.NET_TIMESLOT_STEP, self.temp_total_enqueued, self.temp_total_served, self.temp_total_dropped,
+             len(self.queue)))
 
         self.temp_total_enqueued = 0
         self.temp_total_served = 0
@@ -91,7 +95,6 @@ class NetQueue():
         self.perm_total_enqueued = 0
         self.perm_total_served = 0
         self.perm_total_dropped = 0
-
 
     def update_dead_packets(self):
         for i in range(len(self.queue)):
