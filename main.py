@@ -19,10 +19,10 @@ bandwidth1 = [0]
 bandwidth2 = [0]
 queue1 = [s[2]]
 queue2 = [s[3]]
-for i in range(100):
+for i in range(10000):
     indices.append(i+1)
     s, _, stats = net.step(1)
-    print(s)
+    #print(s)
     active_users1.append(s[0])
     active_users2.append(s[1])
     bandwidth1.append(stats[0])

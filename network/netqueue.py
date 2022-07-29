@@ -21,6 +21,9 @@ class NetQueue():
 
         self.stats = []
 
+    def allocate_resource(self, resources):
+        self.allocated_resources = resources
+
     def empty(self) -> bool:
         return True if len(self.queue) == 0 else False
 

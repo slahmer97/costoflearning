@@ -26,7 +26,7 @@ class Network:
 
         self.slice_1_flows = [
             {
-                'max_users': 10,
+                'max_users': 9,
                 "packet_size": 512,
                 "req_delay": 70.5,
                 "max_delay": 70.5,
@@ -41,6 +41,10 @@ class Network:
         self.slices = []
         for i in range(2):
             self.slices.append(NetQueue())
+
+        res = 5
+        self.slices[0].allocate_resource(res)
+        self.slices[1].allocate_resource(10-res)
 
         self.generators = []
 
