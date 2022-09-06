@@ -1,14 +1,23 @@
+from typing import Optional, Union, List
+
+from gym.vector.utils import spaces
+
 from network.flow_gen import OnOffFlowGenerator, UniformFlowGenerator, AggregateOnOffFlowGenerator
 import numpy as np
-
+import gym
 from network.globsim import SimGlobals
 from network.netqueue import NetQueue
 
 
-class Network:
+class Network(gym.Env):
+
+    def render(self, mode="human"):
+        pass
 
     def __init__(self):
         self.state = None
+        self.action_space = spaces.Discrete(3)
+        self.observation_space = spaces.Box(low=0, high=1500, shape=(4,), dtype=np.float32)
         self.slice_0_flows = [
             {
                 'max_users': 8,
@@ -44,7 +53,7 @@ class Network:
 
         res = 5
         self.slices[0].allocate_resource(res)
-        self.slices[1].allocate_resource(10-res)
+        self.slices[1].allocate_resource(10 - res)
 
         self.generators = []
 
@@ -55,6 +64,13 @@ class Network:
             self.generators.append(AggregateOnOffFlowGenerator(**conf))
 
     def step(self, action=None):
+
+        def reward_func(q1, q2):
+            term1 = 1 / (pow(q1, 1) + 1)
+            term2 = 1 / (pow(q2, 2) + 1)
+
+            return term1 + term2
+
         tmp_state = []
         stats = []
         for generator in self.generators:
@@ -64,6 +80,19 @@ class Network:
             tmp_state.append(active_user)
             stats.append(len(a) * 512)
         # Apply the new resource allocation according to the action=action
+        if action == 0:
+            pass
+        elif action == 1:
+            self.slices[0].allocate_resource(min(10, self.slices[0].allocated_resources + 1))
+            self.slices[1].allocate_resource(max(0, self.slices[1].allocated_resources - 1))
+
+        elif action == 2:
+            # move one resource to slice 1
+            self.slices[0].allocate_resource(max(0, self.slices[0].allocated_resources - 1))
+            self.slices[1].allocate_resource(min(10, self.slices[1].allocated_resources + 1))
+        else:
+            # action was not recognized
+            raise ValueError("Action value was not recognized")
 
         # move the system
         for i in range(2):
@@ -73,11 +102,17 @@ class Network:
         SimGlobals.NET_TIMESLOT_STEP += 1
 
         self.state = tmp_state
-        return np.array(self.state), 0.0, stats
+        info = {
+            "episode": 0,
+            "stats": stats,
+        }
+        return np.array(self.state), reward_func(self.state[2], self.state[3]), False, info
 
-    def reset(self):
+    def reset(self, **kwargs):
         lambda_1, _ = self.generators[0].reset()
         lambda_2, _ = self.generators[1].reset()
+        self.slices = []
+        for i in range(2):
+            self.slices.append(NetQueue())
         self.state = [lambda_1, lambda_2, len(self.slices[0]), len(self.slices[1])]
         return np.array(self.state)
-
