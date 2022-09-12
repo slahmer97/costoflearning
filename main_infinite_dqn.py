@@ -3,16 +3,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from network.network import Network
-
+from collections import deque
 import matplotlib.pyplot as plt
 import copy
 
 # hyper-parameters
 BATCH_SIZE = 128
 LR = 0.001
-GAMMA = 0.98
-EPS = 0.1
-EPS_DECAY = 1.0
+GAMMA = 0.95
+EPS = 1.0
+EPS_DECAY = 0.999
 EPS_MIN = 0.001
 MEMORY_CAPACITY = 10000
 Q_NETWORK_ITERATION = 100
@@ -112,55 +112,76 @@ class DQN():
 
 def main():
     dqn = DQN()
-    episodes = 1000
-    episode_len = 1000
+    episodes = 1000000
     print("Collecting Experience....")
-    reward_list = []
+
     plt.ion()
-    fig, axs = plt.subplots(3)
+    fig, axs = plt.subplots(4)
     mean_reward = []
-    epsilons = []
+
     for i in range(episodes):
         # print("episode: {}".format(i))
         state = env.reset()
-        queue1 = [state[2]]
-        queue2 = [state[3]]
-        ep_reward = 0
-        epsilons.append(EPS)
-        for step in range(episode_len):
-            if step + 1 == episode_len:
-                env.set_end()
+        max_plot = 300
+        epsilons = deque(maxlen=max_plot)
+
+        queue1 = deque(maxlen=max_plot)
+        queue1.append(state[2])
+        queue2 = deque(maxlen=max_plot)
+        queue2.append(state[3])
+
+        reward_list = []
+
+        resources1 = deque(maxlen=max_plot)
+        resources1.append(state[4])
+        resources2 = deque(maxlen=max_plot)
+        resources2.append(state[5])
+
+        r = 0
+        for _ in range(1000):
+
             action = dqn.choose_action(state)
             next_state, reward, done, info = env.step(action)
 
             dqn.store_transition(state, action, reward, next_state)
-            ep_reward += reward
-
+            epsilons.append(EPS)
             if dqn.memory_counter >= MEMORY_CAPACITY:
                 dqn.learn()
                 # if done:
                 #    print("episode: {} , the episode reward is {}".format(i, round(ep_reward, 3)))
-            if done:
-                break
+
             state = next_state
+
             queue1.append(state[2])
             queue2.append(state[3])
 
-        reward_list.append(ep_reward)
-        mean_reward.append(np.mean(reward_list[-min(len(reward_list), 50):]))
-        print("episode: {} -- mean-reward: {}".format(i, mean_reward[-1]))
+            resources1.append(state[4])
+            resources2.append(state[5])
 
+            r += reward
+
+        reward_list.append(r)
+
+        epsilons.append(EPS)
+
+        mean_reward.append(reward_list[-min(100, len(reward_list)):])
         axs[0].cla()
-        axs[0].plot(mean_reward, label='reward')
+        axs[0].plot(mean_reward)
+        axs[0].set_title('Average Sum of Reward over 1000 step')
 
         axs[1].cla()
-        axs[1].plot(queue1, label='q1')
-        axs[1].plot(queue2, label='q2')
+        axs[1].plot(list(queue1), label='q1')
+        axs[1].plot(list(queue2), label='q2')
+        #axs[1].set_title('Queue Size -- ')
 
         axs[2].cla()
-        axs[2].plot(epsilons, label='EPS')
+        axs[2].plot(list(epsilons), label='EPS')
         # plt.legend()
-        plt.pause(0.001)
+
+        axs[3].cla()
+        axs[3].plot(list(resources1), label='resource-1')
+        axs[3].plot(list(resources2), label='resource-2')
+        plt.pause(0.0001)
 
 
 if __name__ == '__main__':

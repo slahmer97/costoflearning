@@ -36,7 +36,7 @@ class Network(gym.Env):
 
         self.slice_1_flows = [
             {
-                'max_users': 8,
+                'max_users': 9,
                 "packet_size": 512,
                 "req_delay": 70.5,
                 "max_delay": 70.5,
@@ -68,10 +68,12 @@ class Network(gym.Env):
 
     def step(self, action=None):
         def reward_func(q1, q2):
-            term1 = 1 / (pow(q1, 1) + 1)
-            term2 = 1 / (pow(q2, 2) + 1)
-            term3 = - abs((q1 - q2) / 1500.0)
-            return term1 + term2
+            normalized_q1 = q1 / 1500.0
+            normalized_q2 = q2 / 1500.0
+            normalized_diff = abs((q1 - q2) / 1500.0)
+            term1 = - pow(q1, 1) / 1500.0
+            term2 = - pow(q2, 1) / 1500.0
+            return - normalized_q1 - normalized_q2 - normalized_diff
 
         tmp_state = []
         stats = []

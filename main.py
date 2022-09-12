@@ -14,7 +14,7 @@ print(net.observation_space)
 indices = []
 cum_reward = []
 mean_reward = []
-episode_len = 500
+episode_len = 2000
 episodes = 100000
 print('here')
 for i in range(episodes):
@@ -38,10 +38,10 @@ for i in range(episodes):
         Y1.append(s[2])
         Y2.append(s[3])
     cum_reward.append(r)
-    mean_reward.append(np.mean(cum_reward[-min(60, len(cum_reward)):]))
+    mean_reward.append(np.mean(cum_reward[-min(100, len(cum_reward)):]))
     print("step: {} -- mean-reward: {}".format(i, np.mean(cum_reward[-min(60, len(cum_reward)):])))
     print("\t action0: {} -- action1: {} -- action2: {}".format(net.action0, net.action1, net.action2))
-    if i in list(range(50, episodes, 50)):
+    if i in list(range(10, episodes, 10)):
         plt.plot(X, Y1, label='queue-1')
         plt.plot(X, Y2, label='queue-2')
         plt.legend()
