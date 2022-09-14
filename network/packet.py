@@ -1,3 +1,5 @@
+import numpy as np
+
 from .globsim import SimGlobals
 
 
@@ -15,8 +17,19 @@ class Packet:
         self.size = size  # in bit
 
     def is_dead(self):
-        #max_timeslots = self.max_delay / SimGlobals.NET_TIMESLOT_DURATION
-        #print("{} <= {}".format(SimGlobals.NET_TIMESLOT_STEP - self.generated_at, max_timeslots))
-        #assert SimGlobals.NET_TIMESLOT_STEP - self.generated_at <= max_timeslots
-        return False
-        return SimGlobals.NET_TIMESLOT_STEP - self.generated_at >= max_timeslots
+        if self.max_delay == np.Inf:
+            return False
+
+        max_timeslot = int(self.max_delay / SimGlobals.NET_TIMESLOT_DURATION_S)
+
+        assert max_timeslot >= 1
+
+        assert SimGlobals.NET_TIMESLOT_STEP <= self.generated_at + max_timeslot
+
+        do_not_drop = SimGlobals.NET_TIMESLOT_STEP < self.generated_at + max_timeslot
+
+        if not do_not_drop:
+            print("Packet has been dropped! : inserted: {} -- step: {} -- max_timeslot: {}".format(self.generated_at, SimGlobals.NET_TIMESLOT_STEP, max_timeslot))
+
+        return not do_not_drop
+

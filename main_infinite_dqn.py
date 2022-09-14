@@ -116,12 +116,12 @@ def main():
     print("Collecting Experience....")
 
     plt.ion()
-    fig, axs = plt.subplots(4)
+    fig, axs = plt.subplots(5)
     mean_reward = []
+    state = env.reset()
 
     for i in range(episodes):
         # print("episode: {}".format(i))
-        state = env.reset()
         max_plot = 300
         epsilons = deque(maxlen=max_plot)
 
@@ -138,11 +138,12 @@ def main():
         resources2.append(state[5])
 
         r = 0
+        enqueued = []
+        dead = []
         for _ in range(1000):
 
             action = dqn.choose_action(state)
             next_state, reward, done, info = env.step(action)
-
             dqn.store_transition(state, action, reward, next_state)
             epsilons.append(EPS)
             if dqn.memory_counter >= MEMORY_CAPACITY:
@@ -157,6 +158,9 @@ def main():
 
             resources1.append(state[4])
             resources2.append(state[5])
+
+            enqueued.append(info["s2"][-4])
+            dead.append(info["s2"][-1])
 
             r += reward
 
@@ -181,6 +185,12 @@ def main():
         axs[3].cla()
         axs[3].plot(list(resources1), label='resource-1')
         axs[3].plot(list(resources2), label='resource-2')
+
+        axs[4].cla()
+        #axs[4].plot(list(enqueued), label='resource-1')
+        axs[4].plot(list(dead), label='resource-2')
+
+
         plt.pause(0.0001)
 
 

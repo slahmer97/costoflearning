@@ -23,7 +23,7 @@ class Network(gym.Env):
             {
                 'max_users': 8,
                 "packet_size": 512,
-                "req_delay": 300,
+                "req_delay": 0.300,
                 "max_delay": np.infty,
                 "on_rate": 1536000,
                 "flow_class": 'non-critical-audio',
@@ -38,8 +38,8 @@ class Network(gym.Env):
             {
                 'max_users': 9,
                 "packet_size": 512,
-                "req_delay": 70.5,
-                "max_delay": 70.5,
+                "req_delay": 0.0705,
+                "max_delay": 0.0705,
                 "on_rate": 1536000,
                 "flow_class": 'critical-audio',
                 "flow_model": 'unicast',
@@ -73,10 +73,16 @@ class Network(gym.Env):
             normalized_diff = abs((q1 - q2) / 1500.0)
             term1 = - pow(q1, 1) / 1500.0
             term2 = - pow(q2, 1) / 1500.0
-            return - normalized_q1 - normalized_q2 - normalized_diff
+            return - normalized_diff
 
         tmp_state = []
         stats = []
+
+        for i in range(2):
+            self.slices[i].update_dead_packets()
+        s1 = self.slices[0].get_state()
+        s2 = self.slices[1].get_state()
+
         for generator in self.generators:
             # generate the packets before running the activeuser model to the next state, then makes the move
             a, active_user, _ = generator.step()
@@ -116,6 +122,8 @@ class Network(gym.Env):
         info = {
             "episode": 0,
             "stats": stats,
+            "s1": s1,
+            "s2": s2
         }
 
         done = self.end

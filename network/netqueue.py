@@ -13,11 +13,12 @@ class NetQueue():
         self.perm_total_enqueued = 0
         self.perm_total_served = 0
         self.perm_total_dropped = 0
-
+        self.perm_dead = 0
         # temp stats
         self.temp_total_enqueued = 0
         self.temp_total_served = 0
         self.temp_total_dropped = 0
+        self.temp_dead = 0
 
         self.stats = []
 
@@ -46,7 +47,7 @@ class NetQueue():
         return len(self.queue)
 
     def step(self):
-        self.update_dead_packets()
+        #self.update_dead_packets()
         available_bandwidth = SimGlobals.NET_TIMESLOT_DURATION_S * self.allocated_resources * SimGlobals.BANDWIDTH_PER_RESOURCE
         count = 0
         while available_bandwidth > 0 and not self.empty():
@@ -56,7 +57,6 @@ class NetQueue():
             served_packet = self.get()
             available_bandwidth -= served_packet.size
             served_packet.served_at = SimGlobals.NET_TIMESLOT_STEP
-            SimGlobals.served_packets.append(served_packet)
 
     def enqueue(self, packet):
         if isinstance(packet, Packet):
@@ -93,14 +93,24 @@ class NetQueue():
         self.temp_total_enqueued = 0
         self.temp_total_served = 0
         self.temp_total_dropped = 0
+        self.temp_dead = 0
 
     def reset_perm_stats(self):
         self.perm_total_enqueued = 0
         self.perm_total_served = 0
         self.perm_total_dropped = 0
+        self.perm_dead = 0
 
+    def get_state(self):
+        return [self.temp_total_enqueued, self.temp_total_dropped, self.temp_total_served, self.temp_dead,
+                self.perm_total_enqueued, self.perm_total_dropped, self.perm_total_served, self.perm_dead]
     def update_dead_packets(self):
+        indices_tobe_deleted = []
+
         for i in range(len(self.queue)):
             if self.queue[i].is_dead():
-                SimGlobals.dropped_after_enqueue_packets.append(self.queue[i])
-                del self.queue[i]
+                self.perm_dead += 1
+                self.temp_dead += 1
+                indices_tobe_deleted.append(i)
+        for i in sorted(indices_tobe_deleted, reverse=True):
+            del (self.queue[i])

@@ -1,11 +1,8 @@
 class SimGlobals:
     NET_TIMESLOT_STEP = 0
-    NET_TIMESLOT_DURATION_S = 0.001  # in s
+    NET_TIMESLOT_DURATION_S = 0.0005  # in s
     RESOURCES_COUNT = 10
     BANDWIDTH_PER_RESOURCE = 1000000  # 0.1 mBps
-    dropped_before_enqueue_packets = []
-    dropped_after_enqueue_packets = []
-    served_packets = []
 
     flow_counter = 0
 
