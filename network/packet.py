@@ -28,8 +28,8 @@ class Packet:
 
         do_not_drop = SimGlobals.NET_TIMESLOT_STEP < self.generated_at + max_timeslot
 
-        if not do_not_drop:
-            print("Packet has been dropped! : inserted: {} -- step: {} -- max_timeslot: {}".format(self.generated_at, SimGlobals.NET_TIMESLOT_STEP, max_timeslot))
+        #if not do_not_drop:
+        #    print("Packet has been dropped! : inserted: {} -- step: {} -- max_timeslot: {}".format(self.generated_at, SimGlobals.NET_TIMESLOT_STEP, max_timeslot))
 
         return not do_not_drop
 

@@ -2,12 +2,13 @@ from queue import Queue
 from .packet import Packet
 from .globsim import SimGlobals
 from collections import deque
+from network.globsim import SimGlobals as G
 
 
-class NetQueue():
+class NetQueue:
     def __init__(self, maxsize=1500):
         self.queue = deque(maxlen=maxsize)
-        self.allocated_resources = 5
+        self.allocated_resources = None
 
         # perm stats
         self.perm_total_enqueued = 0
@@ -47,7 +48,7 @@ class NetQueue():
         return len(self.queue)
 
     def step(self):
-        #self.update_dead_packets()
+        # self.update_dead_packets()
         available_bandwidth = SimGlobals.NET_TIMESLOT_DURATION_S * self.allocated_resources * SimGlobals.BANDWIDTH_PER_RESOURCE
         count = 0
         while available_bandwidth > 0 and not self.empty():
@@ -57,6 +58,7 @@ class NetQueue():
             served_packet = self.get()
             available_bandwidth -= served_packet.size
             served_packet.served_at = SimGlobals.NET_TIMESLOT_STEP
+        return count
 
     def enqueue(self, packet):
         if isinstance(packet, Packet):
@@ -104,6 +106,7 @@ class NetQueue():
     def get_state(self):
         return [self.temp_total_enqueued, self.temp_total_dropped, self.temp_total_served, self.temp_dead,
                 self.perm_total_enqueued, self.perm_total_dropped, self.perm_total_served, self.perm_dead]
+
     def update_dead_packets(self):
         indices_tobe_deleted = []
 
@@ -114,3 +117,42 @@ class NetQueue():
                 indices_tobe_deleted.append(i)
         for i in sorted(indices_tobe_deleted, reverse=True):
             del (self.queue[i])
+
+
+class ExperienceQueue:
+    def __init__(self, init=0):
+        self.max_size = 1500
+        self.queue = deque()
+        self.allocated_resources = init
+
+        self.total_available_so_far = 0
+        self.dropped = 0
+
+    def push(self, sample):
+        if len(self.queue) <= self.max_size:
+            self.queue.append(sample)
+        else:
+            self.dropped += 1
+
+    def step(self, additional_resources=0):
+        assert additional_resources >= 0
+        samples = []
+        if len(self.queue) < 1:
+            return samples
+
+        available_bandwidth = SimGlobals.NET_TIMESLOT_DURATION_S * (
+                self.allocated_resources + additional_resources) * SimGlobals.BANDWIDTH_PER_RESOURCE
+
+        self.total_available_so_far += available_bandwidth
+
+        # print('Available bandwidth is: {}'.format(self.total_available_so_far))
+
+        while self.total_available_so_far >= G.EXPERIENCE_SIZE and len(self.queue) > 0:
+            sample = self.queue.popleft()
+            self.total_available_so_far -= G.EXPERIENCE_SIZE
+            samples.append(sample)
+
+        if len(self.queue) == 0:
+            self.total_available_so_far = 0
+
+        return samples

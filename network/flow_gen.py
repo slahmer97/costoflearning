@@ -44,13 +44,14 @@ class AggregateOnOffFlowGenerator(FlowGenerator):
         print("[+] New AggregateOnOffFlowGenerator has been created [{}]\n"
               "\t max users: {}\n"
               "\t slice : {}\n"
-              "\t rate : {}\n"
+              "\t rate : {} per sec\n"
+              "\t rate : {} packet per slot\n"
               "\t packet size: {}\n"
               "\t required delay: {}\n"
               "\t max delay: {}\n"
               "\t flow class: {}\n"
               "\t flow model: {}\n"
-              "\t flow perf: {}".format( self.flow_id, self.max_users, self.slice, on_rate, self.packet_size,
+              "\t flow perf: {}".format(self.flow_id, self.max_users, self.slice, on_rate, self.rate, self.packet_size,
                                         self.req_delay, self.max_delay,
                                         self.flow_class, self.flow_model, self.flow_performance))
 
