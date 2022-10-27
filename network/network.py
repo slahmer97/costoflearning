@@ -13,6 +13,10 @@ class Network(gym.Env):
         pass
 
     def __init__(self, **kwargs):
+
+        self.was_greedy = False
+        self.last_values = (None, None)
+
         self.end = False
         self.state = None
         self.action_space = spaces.Discrete(3)
@@ -24,7 +28,7 @@ class Network(gym.Env):
                 "packet_size": self.packet_size,
                 "req_delay": 0.300,
                 "max_delay": np.infty,
-                "on_rate": 1536000,  # bits per second
+                "on_rate": 512000,  # bits per second
                 "flow_class": 'non-critical-audio',
                 "flow_model": 'unicast',
                 "flow_performance": 'strict',
@@ -37,9 +41,9 @@ class Network(gym.Env):
             {
                 'max_users': kwargs["max_users:1"],
                 "packet_size": self.packet_size,
-                "req_delay": 0.0705,
-                "max_delay": 0.0705,
-                "on_rate": 1536000,  # bits per second
+                "req_delay": 0.0700,
+                "max_delay": 0.0700,
+                "on_rate": 512000,  # bits per second
                 "flow_class": 'critical-audio',
                 "flow_model": 'unicast',
                 "flow_performance": 'strict',
@@ -52,9 +56,12 @@ class Network(gym.Env):
         self.action0 = 0
         self.action1 = 0
         self.action2 = 0
+
+        self.reward_greedy = 0.0
+        self.reward_non_greedy = 0.0
         self.slices = []
         for i in range(2):
-            self.slices.append(NetQueue())
+            self.slices.append(NetQueue(type=i))
 
         self.init_resources()
 
@@ -65,7 +72,6 @@ class Network(gym.Env):
 
         for conf in self.slice_1_flows:
             self.generators.append(AggregateOnOffFlowGenerator(**conf))
-
         r1, r2 = self.get_expected_rates()  # packets per second
         total_number_of_packets = G.TOTAL_LINK_BANDWIDTH / self.packet_size
         self.total_number_of_packets_per_slot = total_number_of_packets * G.NET_TIMESLOT_DURATION_S
@@ -81,7 +87,13 @@ class Network(gym.Env):
         self.slices[0].allocate_resource(res)
         self.slices[1].allocate_resource(G.RESOURCES_COUNT - res)
 
-    def step(self, action=None):
+    def reset_values(self):
+        if self.was_greedy:
+            self.was_greedy = False
+            self.slices[0].allocate_resource(self.last_values[0])
+            self.slices[1].allocate_resource(self.last_values[1])
+
+    def step(self, action=None, greedy_selection=None):
 
         def reward_func3(obj, q1, dead1, drop1, q2, dead2, drop2):
             normalized_drop1 = drop1 / obj.slice_0_flows[0]["max_users"]
@@ -120,19 +132,30 @@ class Network(gym.Env):
             stats.append(len(a))
         # Apply the new resource allocation according to the action=action
         if action == 0:
+            self.reset_values()
             self.action0 += 1
-            pass
+
         elif action == 1:
+            self.reset_values()
             self.action1 += 1
             self.slices[0].allocate_resource(min(G.RESOURCES_COUNT, self.slices[0].allocated_resources + 1))
             self.slices[1].allocate_resource(G.RESOURCES_COUNT - self.slices[0].allocated_resources)
 
         elif action == 2:
+            self.reset_values()
             self.action2 += 1
 
             # move one resource to slice 1
             self.slices[0].allocate_resource(max(0, self.slices[0].allocated_resources - 1))
             self.slices[1].allocate_resource(G.RESOURCES_COUNT - self.slices[0].allocated_resources)
+        elif action == 3:
+            # print(greedy_selection)
+            self.last_values = self.slices[0].allocated_resources, self.slices[1].allocated_resources
+
+            self.slices[0].allocate_resource(greedy_selection[0])
+            self.slices[1].allocate_resource(greedy_selection[1])
+            self.was_greedy = True
+
         else:
             # action was not recognized
             raise ValueError("Action value was not recognized")
@@ -155,12 +178,17 @@ class Network(gym.Env):
         self.state.append(self.slices[0].allocated_resources)
         self.state.append(self.slices[1].allocated_resources)
 
+        interrupt0, interrupt_count0 = self.slices[0].can_interrupt_next()
+        interrupt1, interrupt_count1 = self.slices[1].can_interrupt_next()
+
         info = {
             "episode": 0,
             "gp": stats,
             "served_packets": served_packets,
             "s0": s[0],
             "s1": s[1],
+
+            "interruption": [(interrupt0, interrupt_count0), (interrupt1, interrupt_count1)]
         }
 
         done = self.end
@@ -171,6 +199,10 @@ class Network(gym.Env):
                                   dead2=s[1][3], drop2=s[1][1])
         # ret_reward = reward_func2(self.state[2], s[0][3], self.state[3], s[1][3])
         # ret_reward = reward_func(self.state[2], self.state[3])
+        if self.was_greedy:
+            self.reward_greedy += ret_reward
+        else:
+            self.reward_non_greedy += ret_reward
 
         return np.array(self.state) / self.normaliser, ret_reward, done, info
 
@@ -182,7 +214,7 @@ class Network(gym.Env):
         lambda_2, _ = self.generators[1].reset()
         self.slices = []
         for i in range(2):
-            self.slices.append(NetQueue())
+            self.slices.append(NetQueue(type=i))
         self.init_resources()
         self.state = [lambda_1, lambda_2, len(self.slices[0]), len(self.slices[1]), self.slices[0].allocated_resources,
                       self.slices[1].allocated_resources]

@@ -44,11 +44,15 @@ class ActiveUsers:
         self.current_state = np.random.choice(self.states, p=self.transitions[self.current_state])
         return self.current_state, self.transitions[self.current_state]
 
-    def get_mean(self):
+    def get_mean_var(self):
         steady_state = self.mc.steady_states[0]
-        states = np.array([i for i in range(self.max_users + 1)])
-        ret = np.dot(steady_state, states)
-        return ret
+        i = np.array([i for i in range(self.max_users + 1)])
+        i_2 = np.array([pow(i, 2) for i in range(self.max_users + 1)])
+
+        expected_val = np.dot(steady_state, i)
+        variance = np.dot(steady_state, i_2) - pow(expected_val, 2)
+
+        return expected_val, variance
 
     def simulate(self):
         current_state = np.random.choice(self.states, p=self.mc.steady_states[0])

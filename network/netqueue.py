@@ -1,3 +1,4 @@
+import queue
 from queue import Queue
 from .packet import Packet
 from .globsim import SimGlobals
@@ -6,9 +7,11 @@ from network.globsim import SimGlobals as G
 
 
 class NetQueue:
-    def __init__(self, maxsize=1500):
+    def __init__(self, type, maxsize=1500):
         self.queue = deque(maxlen=maxsize)
         self.allocated_resources = None
+
+        self.type = type
 
         # perm stats
         self.perm_total_enqueued = 0
@@ -118,26 +121,47 @@ class NetQueue:
         for i in sorted(indices_tobe_deleted, reverse=True):
             del (self.queue[i])
 
+    def can_interrupt_next(self):
+        interrupt = True
+        non_feasible_packets = 0
+
+        for i in range(len(self.queue)):
+            packet_state, state_value = self.queue[i].get_packet_state()
+            if (packet_state == "soft" or packet_state == "hard") and state_value <= 1:
+                interrupt = True
+                non_feasible_packets += 1
+
+        return interrupt, non_feasible_packets
+
 
 class ExperienceQueue:
     def __init__(self, init=0):
         self.max_size = 1500
         self.queue = deque()
+
+        self.lifo = queue.LifoQueue(maxsize=1500)
+
         self.allocated_resources = init
 
         self.total_available_so_far = 0
         self.dropped = 0
 
+        self.last_resource_usage = init
+
     def push(self, sample):
-        if len(self.queue) <= self.max_size:
-            self.queue.append(sample)
-        else:
-            self.dropped += 1
+        self.lifo.put(sample)
+
+        # if len(self.queue) <= self.max_size:
+        #    self.queue.append(sample)
+        # else:
+        #    self.dropped += 1
 
     def step(self, additional_resources=0):
+
+        self.last_resource_usage = self.allocated_resources + additional_resources
         assert additional_resources >= 0
         samples = []
-        if len(self.queue) < 1:
+        if self.lifo.qsize() < 1:
             return samples
 
         available_bandwidth = SimGlobals.NET_TIMESLOT_DURATION_S * (
@@ -147,12 +171,12 @@ class ExperienceQueue:
 
         # print('Available bandwidth is: {}'.format(self.total_available_so_far))
 
-        while self.total_available_so_far >= G.EXPERIENCE_SIZE and len(self.queue) > 0:
-            sample = self.queue.popleft()
+        while self.total_available_so_far >= G.EXPERIENCE_SIZE and self.lifo.qsize() > 0:
+            sample = self.lifo.get()  # self.queue.popleft()
             self.total_available_so_far -= G.EXPERIENCE_SIZE
             samples.append(sample)
 
-        if len(self.queue) == 0:
+        if self.lifo.qsize() == 0:
             self.total_available_so_far = 0
 
         return samples

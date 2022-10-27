@@ -37,7 +37,7 @@ class AggregateOnOffFlowGenerator(FlowGenerator):
 
         # s_{t} = s
         self.current_state = None
-
+        expected_val, variance = self.active_users_model.get_mean_var()
         # return transition probabilities of the next state given the current state
         # Pr(s_{t+1} | s_{t} = s)
         self.distribution_over_next_state = None
@@ -51,9 +51,11 @@ class AggregateOnOffFlowGenerator(FlowGenerator):
               "\t max delay: {}\n"
               "\t flow class: {}\n"
               "\t flow model: {}\n"
-              "\t flow perf: {}".format(self.flow_id, self.max_users, self.slice, on_rate, self.rate, self.packet_size,
+              "\t flow perf: {}\n"
+              "\t Exp[users]: {} -- Var[users]: {}\n"
+              .format(self.flow_id, self.max_users, self.slice, on_rate, self.rate, self.packet_size,
                                         self.req_delay, self.max_delay,
-                                        self.flow_class, self.flow_model, self.flow_performance))
+                                        self.flow_class, self.flow_model, self.flow_performance, expected_val, variance))
 
     def step(self):
         ret = []
