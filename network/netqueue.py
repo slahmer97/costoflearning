@@ -135,11 +135,14 @@ class NetQueue:
 
 
 class ExperienceQueue:
-    def __init__(self, init=0):
+    def __init__(self, init=0, queue_type="fifo"):
         self.max_size = 1500
-        self.queue = deque()
+        self.queue_type = queue_type
 
-        self.lifo = queue.LifoQueue(maxsize=1500)
+        if queue_type == "fifo":
+            self.queue = deque(maxlen=self.max_size)
+        else:
+            self.lifo = queue.LifoQueue(maxsize=self.max_size)
 
         self.allocated_resources = init
 
@@ -148,20 +151,40 @@ class ExperienceQueue:
 
         self.last_resource_usage = init
 
-    def push(self, sample):
-        self.lifo.put(sample)
+        print("[+] Experience Queue was created with init_res: {} -- type: {} -- max_size: {}".format(self.allocated_resources, self.queue_type, self.max_size))
 
+    def push(self, sample):
+        if self.queue_type == "fifo":
+            if len(self.queue) == self.max_size:
+                self.dropped += 1
+            self.queue.append(sample)
+        else:
+            if self.lifo.qsize() == self.max_size:
+                self.dropped += 1
+            self.lifo.put(sample)
         # if len(self.queue) <= self.max_size:
         #    self.queue.append(sample)
         # else:
         #    self.dropped += 1
+
+    def __len__(self):
+        if self.queue_type == "fifo":
+            return len(self.queue)
+        else:
+            return self.lifo.qsize()
+
+    def get(self):
+        if self.queue_type == "fifo":
+            return self.queue.popleft()
+        else:
+            return self.lifo.get()
 
     def step(self, additional_resources=0):
 
         self.last_resource_usage = self.allocated_resources + additional_resources
         assert additional_resources >= 0
         samples = []
-        if self.lifo.qsize() < 1:
+        if len(self) < 1:
             return samples
 
         available_bandwidth = SimGlobals.NET_TIMESLOT_DURATION_S * (
@@ -171,12 +194,12 @@ class ExperienceQueue:
 
         # print('Available bandwidth is: {}'.format(self.total_available_so_far))
 
-        while self.total_available_so_far >= G.EXPERIENCE_SIZE and self.lifo.qsize() > 0:
-            sample = self.lifo.get()  # self.queue.popleft()
+        while self.total_available_so_far >= G.EXPERIENCE_SIZE and len(self) > 0:
+            sample = self.get()  # self.queue.popleft()
             self.total_available_so_far -= G.EXPERIENCE_SIZE
             samples.append(sample)
 
-        if self.lifo.qsize() == 0:
+        if len(self) == 0:
             self.total_available_so_far = 0
 
         return samples

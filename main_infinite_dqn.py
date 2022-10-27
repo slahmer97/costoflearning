@@ -218,7 +218,7 @@ def run(**run_config):
     episodes = 600
     steps_per_episode = 1000
 
-    learning_queue = ExperienceQueue(run_config["learning_resources_count"])
+    learning_queue = ExperienceQueue(init=run_config["learning_resources_count"], queue_type=run_config["queue_type"])
 
     state = env.reset()
     # plotter = StatCollector()
@@ -266,7 +266,7 @@ def run(**run_config):
         for j in range(steps_per_episode):
             step += 1
 
-            ql_size = learning_queue.lifo.qsize()
+            ql_size = len(learning_queue)
             queue_learner.append(ql_size)
 
             action, q_vals = dqn.choose_action(state)
@@ -279,8 +279,8 @@ def run(**run_config):
                     q = q_vals
                     q_count = 1
 
-            if i + j > 0:
-                apply, greedy_selection = greedySelector.act_int_pg(CP=learning_queue.lifo.qsize(),
+            if i + j > 0 and run_config["use_greedy"]:
+                apply, greedy_selection = greedySelector.act_int_pg(CP=len(learning_queue),
                                                                     UP=(
                                                                         int(info["interruption"][0][1]),
                                                                         int(info["interruption"][1][1])),
@@ -295,10 +295,16 @@ def run(**run_config):
                 next_state, reward, done, info = env.step(action)
 
             all_generated_samples += 1
-            new_drp_rate = learning_queue.lifo.qsize() / 1500.0
+
+            new_drp_rate = len(learning_queue) / 1500.0
+
+
             # if drop_rate <= np.random.random(1)[0] and not apply:
-            if new_drp_rate <= np.random.random(1)[0] and not apply:
+            if run_config["use_prob_selection"] and new_drp_rate <= np.random.random(1)[0] and not apply:
                 learning_queue.push((state, action, reward, next_state))
+            elif not run_config["use_prob_selection"]:
+                learning_queue.push((state, action, reward, next_state))
+
             if apply:
                 samples = learning_queue.step(additional_resources=greedy_selection[2])
                 forwarded_samples += len(samples)
@@ -309,8 +315,17 @@ def run(**run_config):
                     if dqn.memory_counter >= run_config["batch_size"] * 15:
                         dqn.learn()
             else:
-                learning_queue.last_resource_usage = 0
+                if run_config["use_greedy"]:
+                    learning_queue.last_resource_usage = 0
+                else:
+                    samples = learning_queue.step()
+                    forwarded_samples += len(samples)
+                    for (si, a, r, sj) in samples:
+                        dqn.store_transition(si, a, r, sj)
 
+                        # changed from run_config to a fixed thing
+                        if dqn.memory_counter >= run_config["batch_size"] * 15:
+                            dqn.learn()
 
                 # if done:
                 #    print("episode: {} , the episode reward is {}".format(i, round(ep_reward, 3)))
@@ -387,7 +402,7 @@ def run_experiments():
     max_users_conf = [(16, 16)]
     init_resources_conf = [
 
-        (15, 0, 0.0)
+        (14, 1, 0.0)
 
     ]
     learning_rates = []
@@ -402,6 +417,9 @@ def run_experiments():
             np.random.seed(0)
             torch.manual_seed(0)
             config = {
+                "use_prob_selection": False,
+                "use_greedy": False,
+                "queue_type": "fifo",
                 "g_eps": 3.0 / 15.0,
                 "g_eps_decay": 0.99998849492,
                 "g_eps_min": 0.00001,
@@ -436,7 +454,7 @@ def run_experiments():
                 "slice1:P10": G.P10,
             }
             wandb.init(reinit=True, config=config, project="costoflearning-ts=0.001")
-            wandb.run.name = "sim-res={}/{},u={}/{},drp={}".format(nres, lres, u1, u2, drp)
+            wandb.run.name = "sim-res={}/{},u={}/{},drp={},useG={}".format(nres, lres, u1, u2, drp, config["use_greedy"])
             wandb.run.save()
 
             run(**config)
