@@ -9,6 +9,7 @@ from greedy_selector import GreedyBalancer
 from network.netqueue import ExperienceQueue
 from network.network import Network
 import wandb
+from sim_perf_collector import PerfCollector
 from stat_collector import StatCollector
 from network.globsim import SimGlobals as G
 
@@ -141,7 +142,6 @@ class DQN:
 
     def store_transition(self, state, action, reward, next_state):
 
-
         transition = np.hstack((state, [action, reward], next_state))
         index = self.memory_counter % self.mem_capacity
         self.memory[index, :] = transition
@@ -151,8 +151,6 @@ class DQN:
         self.stop_learning = True
 
     def learn(self):
-
-
 
         # update the parameters
         if self.step_eps % self.nn_update == 0:
@@ -185,7 +183,11 @@ def run(**run_config):
     G.reset()
     G.RESOURCES_COUNT = run_config["network_resources_count"]
     G.INIT_LEARNING_RESOURCES = run_config["learning_resources_count"]
-
+    save_to = "P0={} P1={} res={}-{} user={}-{} Greedy={}".format(
+        G.P00, G.P11, run_config["network_resources_count"], run_config["learning_resources_count"],
+        run_config["max_users:0"], run_config["max_users:1"], run_config["use_greedy"]
+    )
+    simStatCollector = PerfCollector(filename=run_config["sim-id"])
     # init the globals
     env_config = {
         "max_users:0": run_config["max_users:0"],
@@ -214,8 +216,8 @@ def run(**run_config):
 
     dqn = DQN(**dqn_config)
 
-    max_steps = 600000
-    episodes = 600
+    max_steps = 2000000
+    episodes = 2000
     steps_per_episode = 1000
 
     learning_queue = ExperienceQueue(init=run_config["learning_resources_count"], queue_type=run_config["queue_type"])
@@ -252,6 +254,7 @@ def run(**run_config):
 
     greedySelector = GreedyBalancer(g_eps=run_config["g_eps"], g_eps_decay=run_config["g_eps_decay"],
                                     g_eps_min=run_config["g_eps_min"])
+
     for i in range(episodes):
 
         accumulated_reward = 0
@@ -263,6 +266,7 @@ def run(**run_config):
         greedySelector.non_greedy = 0
         q = None
         q_count = 0
+
         for j in range(steps_per_episode):
             step += 1
 
@@ -291,6 +295,7 @@ def run(**run_config):
 
             if apply:
                 next_state, reward, done, info = env.step(3, greedy_selection)
+                #print("{}".format(reward))
             else:
                 next_state, reward, done, info = env.step(action)
 
@@ -298,15 +303,16 @@ def run(**run_config):
 
             new_drp_rate = len(learning_queue) / 1500.0
 
-
             # if drop_rate <= np.random.random(1)[0] and not apply:
             if run_config["use_prob_selection"] and new_drp_rate <= np.random.random(1)[0] and not apply:
                 learning_queue.push((state, action, reward, next_state))
             elif not run_config["use_prob_selection"]:
                 learning_queue.push((state, action, reward, next_state))
 
+            learner_throughput = 0.0
             if apply:
                 samples = learning_queue.step(additional_resources=greedy_selection[2])
+                learner_throughput = len(samples)
                 forwarded_samples += len(samples)
                 for (si, a, r, sj) in samples:
                     dqn.store_transition(si, a, r, sj)
@@ -319,6 +325,7 @@ def run(**run_config):
                     learning_queue.last_resource_usage = 0
                 else:
                     samples = learning_queue.step()
+                    learner_throughput = len(samples)
                     forwarded_samples += len(samples)
                     for (si, a, r, sj) in samples:
                         dqn.store_transition(si, a, r, sj)
@@ -327,9 +334,36 @@ def run(**run_config):
                         if dqn.memory_counter >= run_config["batch_size"] * 15:
                             dqn.learn()
 
-                # if done:
-                #    print("episode: {} , the episode reward is {}".format(i, round(ep_reward, 3)))
+            simStatCollector.push_stats(s0throughputs=info["served_packets"][0],
+                                        s1throughputs=info["served_packets"][1],
+
+                                        s0death_rates=info["s0"][3],
+                                        s1death_rates=info["s1"][3],
+
+                                        s0drop_rates=info["s0"][1],
+                                        s1drop_rates=info["s1"][1],
+
+                                        s0queue_sizes=float(state[2]),
+                                        s1queue_sizes=float(state[3]),
+
+                                        s0urgent_packets=int(info["interruption"][0][1]),
+                                        s1urgent_packets=int(info["interruption"][1][1]),
+
+                                        s0latency_per_packet=info["s0"][8],
+                                        s1latency_per_packet=info["s1"][8],
+
+                                        lqueue_sizes=ql_size, lthroughputs=learner_throughput
+                                        )
+
+            # if done:
+            #    print("episode: {} , the episode reward is {}".format(i, round(ep_reward, 3)))
             state = next_state
+            wandb.log(
+                {
+                    "learner:resources": learning_queue.last_resource_usage
+                },
+                step=step
+            )
             if step % 10 == 0:
                 wandb.log(
                     {
@@ -348,7 +382,6 @@ def run(**run_config):
                         "slice1:urgent-packet-count": info["interruption"][1][1],
 
                         "learner:queue-size": ql_size,
-                        "learner:resources": learning_queue.last_resource_usage,
                         "learner:forwarded-experiences": forwarded_samples,
                         "learner:greedySelectionEPS": greedySelector.g_eps
 
@@ -367,8 +400,8 @@ def run(**run_config):
 
         # plotter.plot()
 
-        print("[+] Greedy: {} - ({}) -- Non-Greedy: {} - ({})".format(greedySelector.greedy, env.reward_greedy,
-                                                                      greedySelector.non_greedy, env.reward_non_greedy))
+        #print("[+] Greedy: {} - ({}) -- Non-Greedy: {} - ({})".format(greedySelector.greedy, env.reward_greedy,
+        #                                                              greedySelector.non_greedy, env.reward_non_greedy))
         reward_list.append(accumulated_reward)
         env.reward_non_greedy = 0
         env.reward_greedy = 0
@@ -399,67 +432,72 @@ def run(**run_config):
 
 # 182.6
 def run_experiments():
-    max_users_conf = [(16, 16)]
-    init_resources_conf = [
+    max_users_conf = [(16, 17)]
 
-        (14, 1, 0.0)
+    c = {
+        "use_prob_selection": [True, False, False, False, False, True],
+        "use_greedy": [True, False, False, False, False, True],
+        "queue_type": ["lifo", "fifo", "fifo", "fifo", "fifo", "lifo"],
+        "max_users:0": [16, 16, 16, 16, 16, 16],
+        "max_users:1": [17, 17, 17, 17, 17, 17],
+        "network_resources_count": [15, 15, 14, 13, 12, 15],
+        "learning_resources_count": [0, 3, 1, 2, 3, 0]
+    }
 
-    ]
-    learning_rates = []
-    gammas = []
-    nn_updates = []
-    batch_sizes = []
-    network_resources_counts = []
     strategy = "epsilon_greedy"
-    for (u1, u2) in max_users_conf:
-        for (nres, lres, drp) in init_resources_conf:
-            random.seed(0)
-            np.random.seed(0)
-            torch.manual_seed(0)
-            config = {
-                "use_prob_selection": False,
-                "use_greedy": False,
-                "queue_type": "fifo",
-                "g_eps": 3.0 / 15.0,
-                "g_eps_decay": 0.99998849492,
-                "g_eps_min": 0.00001,
+    for i in range(0, len(c["use_greedy"])):
+        random.seed(0)
+        np.random.seed(0)
+        torch.manual_seed(0)
+        config = {
+            "sim-id": i,
+            "use_prob_selection": c["use_prob_selection"][i],
+            "use_greedy": c["use_greedy"][i],
+            "queue_type": c["queue_type"][i],
+            "g_eps": 3.0 / 15.0,
+            "g_eps_decay": 0.99998849492,
+            "g_eps_min": 0.01,
 
-                "mem_capacity": 10000,
-                "gamma": 0.95,
-                "epsilon": 1.0,
-                "epsilon_decay": 0.9995,
-                "epsilon_min": 0.0001,
-                "nn_update": 50,
-                "batch_size": 32,
-                "learning_rate": 0.00001,
-                "temperature": 1.2,
-                "exploration_strategy": strategy,
+            "mem_capacity": 10000,
+            "gamma": 0.95,
+            "epsilon": 1.0,
+            "epsilon_decay": 0.9995,
+            "epsilon_min": 0.0001,
+            "nn_update": 50,
+            "batch_size": 32,
+            "learning_rate": 0.00001,
+            "temperature": 1.2,
+            "exploration_strategy": strategy,
 
-                "network_resources_count": nres,
-                "learning_resources_count": lres,
+            "network_resources_count": c["network_resources_count"][i],
+            "learning_resources_count": c["learning_resources_count"][i],
 
-                "max_users:0": u1,
-                "max_users:1": u2,
+            "max_users:0": c["max_users:0"][i],
+            "max_users:1": c["max_users:1"][i],
 
-                "drop_rate": drp,
+            "drop_rate": 0.0,
 
-                "slice0:P00": G.P00,
-                "slice0:P01": G.P01,
-                "slice0:P11": G.P11,
-                "slice0:P10": G.P10,
+            "slice0:P00": G.P00,
+            "slice0:P01": G.P01,
+            "slice0:P11": G.P11,
+            "slice0:P10": G.P10,
 
-                "slice1:P00": G.P00,
-                "slice1:P01": G.P01,
-                "slice1:P11": G.P11,
-                "slice1:P10": G.P10,
-            }
-            wandb.init(reinit=True, config=config, project="costoflearning-ts=0.001")
-            wandb.run.name = "sim-res={}/{},u={}/{},drp={},useG={}".format(nres, lres, u1, u2, drp, config["use_greedy"])
-            wandb.run.save()
+            "slice1:P00": G.P00,
+            "slice1:P01": G.P01,
+            "slice1:P11": G.P11,
+            "slice1:P10": G.P10,
+        }
+        wandb.init(reinit=True, config=config, project="costoflearning-icc23")
+        wandb.run.name = "Sim={}/{},u={}/{},useG={}".format(c["network_resources_count"][i],
+                                                            c["learning_resources_count"][i],
+                                                            c["max_users:0"][i],
+                                                            c["max_users:1"][i], 0.0,
+                                                            config["use_greedy"])
+        wandb.run.save()
 
-            run(**config)
+        run(**config)
 
-            wandb.finish()
+        wandb.finish()
 
 
 run_experiments()

@@ -8,6 +8,7 @@ from network.globsim import SimGlobals as G
 
 class NetQueue:
     def __init__(self, type, maxsize=1500):
+        self.avg_latency = 0
         self.queue = deque(maxlen=maxsize)
         self.allocated_resources = None
 
@@ -61,6 +62,13 @@ class NetQueue:
             served_packet = self.get()
             available_bandwidth -= served_packet.size
             served_packet.served_at = SimGlobals.NET_TIMESLOT_STEP
+
+            current_latency = served_packet.served_at - served_packet.generated_at
+            #if self.type == 1 and current_latency > 50:
+            #    print("packet generated:{} -- served: {} -- latency: {}".format(served_packet.generated_at, served_packet.served_at, current_latency))
+
+            self.avg_latency += current_latency
+
         return count
 
     def enqueue(self, packet):
@@ -100,6 +108,8 @@ class NetQueue:
         self.temp_total_dropped = 0
         self.temp_dead = 0
 
+        self.avg_latency = 0.0
+
     def reset_perm_stats(self):
         self.perm_total_enqueued = 0
         self.perm_total_served = 0
@@ -107,8 +117,13 @@ class NetQueue:
         self.perm_dead = 0
 
     def get_state(self):
+        if self.temp_total_served == 0:
+            avgLatency = 0.0
+        else:
+            avgLatency = self.avg_latency/float(self.temp_total_served)
         return [self.temp_total_enqueued, self.temp_total_dropped, self.temp_total_served, self.temp_dead,
-                self.perm_total_enqueued, self.perm_total_dropped, self.perm_total_served, self.perm_dead]
+                self.perm_total_enqueued, self.perm_total_dropped, self.perm_total_served, self.perm_dead,
+                avgLatency]
 
     def update_dead_packets(self):
         indices_tobe_deleted = []

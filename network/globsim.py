@@ -28,7 +28,7 @@ class SimGlobals:
         SimGlobals.video_bitrate = [32000, 384000]  # [b/s]
 
         # Probabilities TODO tobe changed
-        SimGlobals.P00 = 0.51
-        SimGlobals.P01 = 0.49
-        SimGlobals.P11 = 0.49
-        SimGlobals.P10 = 0.51
+        SimGlobals.P00 = 0.5
+        SimGlobals.P01 = 0.5
+        SimGlobals.P11 = 0.5
+        SimGlobals.P10 = 0.5

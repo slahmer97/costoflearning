@@ -1,0 +1,25 @@
+{
+    "configurations":
+                    [
+                        {
+                            "filename": "0.csv",
+                            "p00": 0.5,
+                            "p11": 0.5,
+                            "users": "16,17",
+                            "is_greedy": true,
+                            "probabilistic_selection":true,
+                            "queue_type": "lifo",
+                            "resources_split": "15/0"
+                        },
+                        {
+                            "filename": "1.csv",
+                            "p00": 0.5,
+                            "p11": 0.5,
+                            "users": "16,17",
+                            "is_greedy": true,
+                            "probabilistic_selection":true,
+                            "queue_type": "fifo",
+                            "resources_split": "15/0"
+                        }
+                    ]
+}

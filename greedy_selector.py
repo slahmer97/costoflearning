@@ -15,10 +15,10 @@ class GreedyBalancer:
 
     def act_int_pg(self, CP, UP, DP, E):
         self.step += 1
-        if self.step % 1 == 0:
+        if self.step % 1000 == 0:
             #self.g_eps = max(self.g_eps_min, self.g_eps * self.g_eps_decay)
             self.g_eps = -7.96e-7 * self.step + 3.0/15.0
-            self.g_eps = max(self.g_eps, 0.0005)
+            self.g_eps = max(self.g_eps,  self.g_eps_min)
         if np.random.random(1)[0] > self.g_eps or self.step == 1:
             self.non_greedy += 1
             return False, (None, None, None)
@@ -65,6 +65,7 @@ class GreedyBalancer:
         # print("objective=", value(prob.objective))
         if sum < 15:
             tmp = list(ret)
+
             tmp[1] += 15-sum
             ret = tuple(tmp)
             #print(sum, ret)
