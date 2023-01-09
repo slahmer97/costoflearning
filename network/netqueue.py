@@ -8,7 +8,9 @@ from network.globsim import SimGlobals as G
 
 class NetQueue:
     def __init__(self, type, maxsize=1500):
-        self.avg_latency = 0
+        self.avg_latency = 0.0
+        self.cum_cost = 0.0
+
         self.queue = deque(maxlen=maxsize)
         self.allocated_resources = None
 
@@ -19,11 +21,13 @@ class NetQueue:
         self.perm_total_served = 0
         self.perm_total_dropped = 0
         self.perm_dead = 0
+        self.perm_resent = 0
         # temp stats
         self.temp_total_enqueued = 0
         self.temp_total_served = 0
         self.temp_total_dropped = 0
         self.temp_dead = 0
+        self.temp_resent = 0
 
         self.stats = []
 
@@ -57,17 +61,28 @@ class NetQueue:
         count = 0
         while available_bandwidth > 0 and not self.empty():
             count += 1
+
             self.temp_total_served += 1
             self.perm_total_served += 1
+
             served_packet = self.get()
             available_bandwidth -= served_packet.size
             served_packet.served_at = SimGlobals.NET_TIMESLOT_STEP
 
             current_latency = served_packet.served_at - served_packet.generated_at
-            #if self.type == 1 and current_latency > 50:
+            # if self.type == 1 and current_latency > 50:
             #    print("packet generated:{} -- served: {} -- latency: {}".format(served_packet.generated_at, served_packet.served_at, current_latency))
 
-            self.avg_latency += current_latency
+            if not SimGlobals.send_success():
+                self.temp_resent += 1
+                self.perm_resent += 1
+                self.queue.appendleft(served_packet)
+            else:
+                self.avg_latency += current_latency
+                val = G.urllc_cost(current_latency)
+                #if self.type == 1:
+                #    print("\tlatency: {} -- val: {} -- total: {} -- resent: {}".format(current_latency, val, self.temp_total_served, self.temp_resent))
+                self.cum_cost += val
 
         return count
 
@@ -107,23 +122,31 @@ class NetQueue:
         self.temp_total_served = 0
         self.temp_total_dropped = 0
         self.temp_dead = 0
+        self.temp_resent = 0
 
         self.avg_latency = 0.0
+
+        self.cum_cost = 0.0
 
     def reset_perm_stats(self):
         self.perm_total_enqueued = 0
         self.perm_total_served = 0
         self.perm_total_dropped = 0
         self.perm_dead = 0
+        self.perm_resent = 0
 
     def get_state(self):
-        if self.temp_total_served == 0:
+        divider = self.temp_total_served - self.temp_resent
+        assert divider >= 0
+
+        if divider == 0:
             avgLatency = 0.0
         else:
-            avgLatency = self.avg_latency/float(self.temp_total_served)
+            avgLatency = self.avg_latency / float(divider)
+
         return [self.temp_total_enqueued, self.temp_total_dropped, self.temp_total_served, self.temp_dead,
                 self.perm_total_enqueued, self.perm_total_dropped, self.perm_total_served, self.perm_dead,
-                avgLatency]
+                avgLatency, self.temp_resent, self.perm_resent, self.cum_cost]
 
     def update_dead_packets(self):
         indices_tobe_deleted = []
@@ -166,7 +189,8 @@ class ExperienceQueue:
 
         self.last_resource_usage = init
 
-        print("[+] Experience Queue was created with init_res: {} -- type: {} -- max_size: {}".format(self.allocated_resources, self.queue_type, self.max_size))
+        print("[+] Experience Queue was created with init_res: {} -- type: {} -- max_size: {}".format(
+            self.allocated_resources, self.queue_type, self.max_size))
 
     def push(self, sample):
         if self.queue_type == "fifo":
@@ -194,6 +218,12 @@ class ExperienceQueue:
         else:
             return self.lifo.get()
 
+    def reset(self):
+        if self.queue_type == "fifo":
+            self.queue = deque(maxlen=self.max_size)
+        else:
+            self.lifo = queue.LifoQueue(maxsize=self.max_size)
+
     def step(self, additional_resources=0):
 
         self.last_resource_usage = self.allocated_resources + additional_resources
@@ -210,9 +240,11 @@ class ExperienceQueue:
         # print('Available bandwidth is: {}'.format(self.total_available_so_far))
 
         while self.total_available_so_far >= G.EXPERIENCE_SIZE and len(self) > 0:
-            sample = self.get()  # self.queue.popleft()
             self.total_available_so_far -= G.EXPERIENCE_SIZE
-            samples.append(sample)
+
+            if SimGlobals.send_success():
+                sample = self.get()  # self.queue.popleft()
+                samples.append(sample)
 
         if len(self) == 0:
             self.total_available_so_far = 0

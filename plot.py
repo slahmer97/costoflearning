@@ -126,9 +126,9 @@ def plot_average_latecy(files, queue=0):
         metric = "slice0:latency_per_packet"
     elif queue == 1:
         metric = "slice1:latency_per_packet"
-    indices = np.arange(0, 550, 10)
+    indices = np.arange(0, 2000, 10)
     print(indices)
-    X = np.arange(0, 550)
+    X = np.arange(0, 2000)
     print(len(X))
     for i, file in enumerate(files):
         currentFileDF = pd.read_csv("sim-res/{}".format(file))
@@ -151,7 +151,7 @@ def plot_average_latecy(files, queue=0):
     plt.show()
 
 
-all_files = ["1.csv"]#, "1.csv", "2.csv", "3.csv"]
+all_files = ["3.csv"]#, "1.csv", "2.csv", "3.csv"]
 # plot_agent_reward_bins(files=["0.csv", "1.csv", "2.csv", "3.csv"])
 # plot_average_queue_sizes(files=["0.csv", "1.csv", "2.csv", "3.csv"], queue=0)
 #plot_average_learner_throughputs(["0.csv"])

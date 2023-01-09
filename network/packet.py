@@ -33,7 +33,7 @@ class Packet:
         assert req_delay_max_slot >= 1
         assert max_delay_max_slot >= 1
 
-        assert SimGlobals.NET_TIMESLOT_STEP <= self.generated_at + req_delay_max_slot
+        #assert SimGlobals.NET_TIMESLOT_STEP <= self.generated_at + req_delay_max_slot
         assert SimGlobals.NET_TIMESLOT_STEP <= self.generated_at + max_delay_max_slot
 
         # deadline already passed

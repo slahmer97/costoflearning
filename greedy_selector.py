@@ -13,12 +13,16 @@ class GreedyBalancer:
         self.greedy = 0
         self.non_greedy = 0
 
+    def reset_gepsilon(self, val=0.1, step=190000):
+        self.g_eps = val
+        self.step = step
+
     def act_int_pg(self, CP, UP, DP, E):
         self.step += 1
         if self.step % 1000 == 0:
-            #self.g_eps = max(self.g_eps_min, self.g_eps * self.g_eps_decay)
-            self.g_eps = -7.96e-7 * self.step + 3.0/15.0
-            self.g_eps = max(self.g_eps,  self.g_eps_min)
+            # self.g_eps = max(self.g_eps_min, self.g_eps * self.g_eps_decay)
+            self.g_eps = -7.96e-7 * self.step + 3.0 / 15.0
+            self.g_eps = max(self.g_eps, self.g_eps_min)
         if np.random.random(1)[0] > self.g_eps or self.step == 1:
             self.non_greedy += 1
             return False, (None, None, None)
@@ -66,9 +70,9 @@ class GreedyBalancer:
         if sum < 15:
             tmp = list(ret)
 
-            tmp[1] += 15-sum
+            tmp[1] += 15 - sum
             ret = tuple(tmp)
-            #print(sum, ret)
+            # print(sum, ret)
         return True, ret
 
     def act(self, control_plane_packets, urgent_packets, data_plane_packets, expected_arrivals):

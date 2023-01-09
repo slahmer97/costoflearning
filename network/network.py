@@ -41,8 +41,8 @@ class Network(gym.Env):
             {
                 'max_users': kwargs["max_users:1"],
                 "packet_size": self.packet_size,
-                "req_delay": 0.0700,
-                "max_delay": 0.0700,
+                "req_delay": 0.0600,
+                "max_delay": 0.1000,
                 "on_rate": 512000,  # bits per second
                 "flow_class": 'critical-audio',
                 "flow_model": 'unicast',
@@ -94,12 +94,20 @@ class Network(gym.Env):
             self.slices[1].allocate_resource(self.last_values[1])
 
     def step(self, action=None, greedy_selection=None):
+        def reward_func4(obj, drop1, dead2, cum_cost2, resent2, served2):
+            normalized_cost1 = - drop1 / obj.slice_0_flows[0]["max_users"]
+
+            normalized_cost2 = (cum_cost2 - dead2) / obj.slice_1_flows[0]["max_users"]
+
+            #print("\t normalized_cost2: {}".format(normalized_cost2))
+
+            return normalized_cost1 + normalized_cost2
 
         def reward_func3(obj, q1, dead1, drop1, q2, dead2, drop2):
             normalized_drop1 = drop1 / obj.slice_0_flows[0]["max_users"]
 
             normalized_dead2 = dead2 / obj.slice_1_flows[0]["max_users"]
-            return - normalized_drop1 - normalized_dead2
+            return - normalized_drop1 - np.exp(normalized_dead2) + 1
 
         def reward_func2(q1, d1, q2, d2):
             normalized_q1 = q1 / 1500.0
@@ -162,6 +170,7 @@ class Network(gym.Env):
 
         # move the system
         s = []  # [s0, s1]
+
         for i in range(2):
             served = self.slices[i].step()
             served_packets.append(served)
@@ -195,8 +204,28 @@ class Network(gym.Env):
         if self.end:
             self.end = False
 
-        ret_reward = reward_func3(obj=self, q1=self.state[2], dead1=s[0][3], drop1=s[0][1], q2=self.state[3],
-                                  dead2=s[1][3], drop2=s[1][1])
+        drop1 = s[0][1]
+        drop2 = s[1][1]
+
+        dead1 = s[0][3]
+        dead2 = s[1][3]
+
+        cum_latency1 = s[0][8]
+        cum_latency2 = s[1][8]
+
+        served1 = s[0][2]
+        served2 = s[1][2]
+
+        resent1 = s[0][9]
+        resent2 = s[1][9]
+
+        cum_cost1 = s[0][11]
+        cum_cost2 = s[1][11]
+
+        ret_reward = reward_func4(obj=self, drop1=drop1, dead2=dead2, cum_cost2=cum_cost2, resent2=resent2,
+                                  served2=served2)
+        # ret_reward = reward_func3(obj=self, q1=self.state[2], dead1=s[0][3], drop1=s[0][1], q2=self.state[3],
+        #                          dead2=s[1][3], drop2=s[1][1])
         # ret_reward = reward_func2(self.state[2], s[0][3], self.state[3], s[1][3])
         # ret_reward = reward_func(self.state[2], self.state[3])
         if self.was_greedy:

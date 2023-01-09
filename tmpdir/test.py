@@ -36,12 +36,6 @@ class Net(nn.Module):
         # action_prob = self.out(x)
         return self.out(x)  # action_prob
 
-    def save_me(self, name="eval"):
-        torch.save(self.state_dict(), "{}-outOfBand.pt".format(name))
-
-    def load_me(self, name="eval"):
-        self.load_state_dict(torch.load("{}-outOfBand.pt".format(name)))
-
 
 class DQN:
     """docstring for DQN"""
@@ -153,13 +147,6 @@ class DQN:
         self.memory[index, :] = transition
         self.memory_counter += 1
 
-    def reset_epsilon(self, val=0.3):
-        self.epsilon = val
-
-    def reset_mem(self):
-        self.memory_counter = 0
-        self.memory = np.zeros((self.mem_capacity, self.state_count * 2 + 2))
-
     def stop(self):
         self.stop_learning = True
 
@@ -196,13 +183,11 @@ def run(**run_config):
     G.reset()
     G.RESOURCES_COUNT = run_config["network_resources_count"]
     G.INIT_LEARNING_RESOURCES = run_config["learning_resources_count"]
-
-    G.init_success_prob(run_config["p_success"])
     save_to = "P0={} P1={} res={}-{} user={}-{} Greedy={}".format(
         G.P00, G.P11, run_config["network_resources_count"], run_config["learning_resources_count"],
         run_config["max_users:0"], run_config["max_users:1"], run_config["use_greedy"]
     )
-    simStatCollector = PerfCollector(filename=run_config["sim-id"])
+    # simStatCollector = PerfCollector(filename=run_config["sim-id"])
     # init the globals
     env_config = {
         "max_users:0": run_config["max_users:0"],
@@ -231,8 +216,8 @@ def run(**run_config):
 
     dqn = DQN(**dqn_config)
 
-    max_steps = 4000000
-    episodes = 4000
+    max_steps = 2000000
+    episodes = 2000
     steps_per_episode = 1000
 
     learning_queue = ExperienceQueue(init=run_config["learning_resources_count"], queue_type=run_config["queue_type"])
@@ -244,7 +229,7 @@ def run(**run_config):
     forwarded_samples = 0.0
     all_generated_samples = 0.0
     step = 0
-
+    """
     wandb.log(
         {
             "slice0:queue-size": state[2],
@@ -265,13 +250,16 @@ def run(**run_config):
         },
         step=step
     )
-
+    """
     reward_list = collections.deque(maxlen=100)
 
     greedySelector = GreedyBalancer(g_eps=run_config["g_eps"], g_eps_decay=run_config["g_eps_decay"],
                                     g_eps_min=run_config["g_eps_min"])
-    dqn.eval_net.load_me("models/eval{}".format(160))
-    dqn.target_net.load_me("models/target{}".format(160))
+    A1 = collections.deque(maxlen=10000)
+    A2 = collections.deque(maxlen=10000)
+    R1 = collections.deque(maxlen=10000)
+    R2 = collections.deque(maxlen=10000)
+
     for i in range(episodes):
 
         accumulated_reward = 0
@@ -283,14 +271,8 @@ def run(**run_config):
         greedySelector.non_greedy = 0
         q = None
         q_count = 0
-        #if i % 10 == 0:
-        #    dqn.eval_net.save_me("models/eval{}".format(i))
-        #    dqn.target_net.save_me("models/target{}".format(i))
 
         for j in range(steps_per_episode):
-            G.update_success_prob(dqn, learning_queue, greedySelector)
-
-
             step += 1
 
             ql_size = len(learning_queue)
@@ -321,6 +303,10 @@ def run(**run_config):
                 # print("{}".format(reward))
             else:
                 next_state, reward, done, info = env.step(action)
+            A1.append(next_state[0])
+            A2.append(next_state[1])
+            R1.append(next_state[4])
+            R2.append(next_state[5])
 
             all_generated_samples += 1
 
@@ -356,7 +342,7 @@ def run(**run_config):
                         # changed from run_config to a fixed thing
                         if dqn.memory_counter >= run_config["batch_size"] * 15:
                             dqn.learn()
-
+            """
             simStatCollector.push_stats(s0throughputs=info["served_packets"][0],
                                         s1throughputs=info["served_packets"][1],
 
@@ -374,53 +360,48 @@ def run(**run_config):
 
                                         s0latency_per_packet=info["s0"][8],
                                         s1latency_per_packet=info["s1"][8],
-                                        s0resent=info["s0"][9], s1resent=info["s1"][9], link_capacity=G.success_prob,
-                                        lqueue_sizes=ql_size, lthroughputs=learner_throughput,
-                                        lrho=greedySelector.g_eps, lepsilon=dqn.epsilon
-                                        )
 
+                                        lqueue_sizes=ql_size, lthroughputs=learner_throughput
+                                        )
+            """
             # if done:
             #    print("episode: {} , the episode reward is {}".format(i, round(ep_reward, 3)))
             state = next_state
-
+            """
             wandb.log(
                 {
                     "learner:resources": learning_queue.last_resource_usage
                 },
                 step=step
             )
+            """
 
+            """
             if step % 10 == 0:
                 wandb.log(
                     {
                         "slice0:queue-size": state[2],
-                        "slice0:resources": state[4] * G.RESOURCES_COUNT,
+                        "slice0:resources": state[4],
                         "slice0:incoming-traffic": info['gp'][0],
                         "slice0:packet-drop": info['s0'][1],
                         "slice0:packet-dead": info['s0'][3],
                         "slice0:urgent-packet-count": info["interruption"][0][1],
-                        "slice0:resents": info["s0"][9],
 
                         "slice1:queue-size": state[3],
-                        "slice1:resources": state[5] * G.RESOURCES_COUNT,
+                        "slice1:resources": state[5],
                         "slice1:incoming-traffic": info['gp'][1],
                         "slice1:packet-drop": info['s1'][1],
                         "slice1:packet-dead": info['s1'][3],
-                        "slice1:resents": info["s1"][9],
-
                         "slice1:urgent-packet-count": info["interruption"][1][1],
 
                         "learner:queue-size": ql_size,
                         "learner:forwarded-experiences": forwarded_samples,
-                        "learner:greedySelectionEPS": greedySelector.g_eps,
-
-                        "slice0:latency_per_packet": info["s0"][8],
-                        "slice1:latency_per_packet": info["s1"][8]
+                        "learner:greedySelectionEPS": greedySelector.g_eps
 
                     },
                     step=step
                 )
-
+            """
             # plotter.push_data(q1=state[2], q2=state[3], r1=state[4], r2=state[5],
             #                  gp1=info['gp'][0], gp2=info['gp'][1])
 
@@ -432,14 +413,14 @@ def run(**run_config):
 
         # plotter.plot()
 
-        print("[+] Step:{}k -- Greedy: {} - ({}) -- Non-Greedy: {} - ({})".format(i, greedySelector.greedy,
-                                                                                  env.reward_greedy,
-                                                                                  greedySelector.non_greedy,
-                                                                                  env.reward_non_greedy))
+        # print("[+] Greedy: {} - ({}) -- Non-Greedy: {} - ({})".format(greedySelector.greedy, env.reward_greedy,
+        #                                                              greedySelector.non_greedy, env.reward_non_greedy))
         reward_list.append(accumulated_reward)
         env.reward_non_greedy = 0
         env.reward_greedy = 0
-
+        print("avg A1= {} -- avg A2= {} -- avg R1={} -- avg R2={} -- Perf={}".format(np.mean(A1), np.mean(A2), np.mean(R1),
+                                                                          np.mean(R2), np.mean(reward_list)))
+        """
         if q is not None:
             # q /= q_count
 
@@ -462,30 +443,32 @@ def run(**run_config):
                 },
                 step=step
             )
-
+        """
         if step >= max_steps:
             return
 
 
 # 182.6
 def run_experiments():
+    max_users_conf = [(16, 17)]
+
     c = {
-        "use_prob_selection": [True],
-        "use_greedy": [True],
-        "queue_type": ["lifo"],
-        "max_users:0": [15],
-        "max_users:1": [20],
-        "network_resources_count": [15],
-        "learning_resources_count": [0]
+        "use_prob_selection": [True, False, False, False, False, True],
+        "use_greedy": [True, False, False, False, False, True],
+        "queue_type": ["lifo", "fifo", "fifo", "fifo", "fifo", "lifo"],
+        "max_users:0": [16, 16, 16, 16, 16, 16],
+        "max_users:1": [17, 17, 17, 17, 17, 17],
+        "network_resources_count": [15, 15, 14, 13, 12, 15],
+        "learning_resources_count": [0, 3, 1, 2, 3, 0]
     }
 
     strategy = "epsilon_greedy"
-    for i in range(0, len(c["use_greedy"])):
+    for i in range(1, len(c["use_greedy"])):
         random.seed(0)
         np.random.seed(0)
         torch.manual_seed(0)
         config = {
-            "sim-id": "dynamic({})-simple-reward2".format(c["learning_resources_count"][i]),
+            "sim-id": i,
             "use_prob_selection": c["use_prob_selection"][i],
             "use_greedy": c["use_greedy"][i],
             "queue_type": c["queue_type"][i],
@@ -512,8 +495,6 @@ def run_experiments():
 
             "drop_rate": 0.0,
 
-            "p_success": 1.0,
-
             "slice0:P00": G.P00,
             "slice0:P01": G.P01,
             "slice0:P11": G.P11,
@@ -524,18 +505,18 @@ def run_experiments():
             "slice1:P11": G.P11,
             "slice1:P10": G.P10,
         }
-
-        wandb.init(reinit=True, config=config, project="costoflearning-extension")
+        """
+        wandb.init(reinit=True, config=config, project="costoflearning-icc23")
         wandb.run.name = "Sim={}/{},u={}/{},useG={}".format(c["network_resources_count"][i],
                                                             c["learning_resources_count"][i],
                                                             c["max_users:0"][i],
                                                             c["max_users:1"][i], 0.0,
                                                             config["use_greedy"])
         wandb.run.save()
-
+        """
         run(**config)
 
-        wandb.finish()
+        # wandb.finish()
 
 
 run_experiments()
