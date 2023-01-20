@@ -13,7 +13,7 @@ class GreedyBalancer:
         self.greedy = 0
         self.non_greedy = 0
 
-    def reset_gepsilon(self, val=0.1, step=190000):
+    def reset_gepsilon(self, val=0.1, step=180000):
         self.g_eps = val
         self.step = step
 
@@ -46,14 +46,14 @@ class GreedyBalancer:
 
         prob += X1 <= min(DP[1] + E[1], 15), "c2"
 
-        prob += Z0 >= min(DP[0] + E[0] - 1400, 15) - X0, "c3"
+        prob += Z0 >= min(DP[0] + E[0] - 1200, 15) - X0, "c3"
 
         prob += Z1 >= min(UP[1], 15) - X1, "c4"
 
         # prob += X2 <= CP, "c5"
-        prob += X2 <= min(CP, 15), "c5"
+        prob += X2 <= min(CP, 9), "c5"
 
-        prob += Z2 == min(CP, 15) - X2, "c6"
+        prob += Z2 == min(CP, 9) - X2, "c6"
 
         # prob.writeLP("resource_optimization.lp")
         from pulp.apis.glpk_api import GLPK_CMD
@@ -70,8 +70,10 @@ class GreedyBalancer:
         if sum < 15:
             tmp = list(ret)
 
-            tmp[1] += 15 - sum
+            tmp[1] += int(15 - sum)
             ret = tuple(tmp)
+
+        assert ret[0] + ret[1] + ret[2] == 15
             # print(sum, ret)
         return True, ret
 

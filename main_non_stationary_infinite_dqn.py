@@ -1,193 +1,16 @@
 import collections
-import torch
 import random
 import numpy as np
-import torch.nn as nn
-import torch.nn.functional as F
+import torch
 
 from greedy_selector import GreedyBalancer
 from network.netqueue import ExperienceQueue
-from network.network import Network
-import wandb
+from network.networkNonStationary import Network
+from network.neuralN import DQN
 from sim_perf_collector import PerfCollector
 from network.globsim import SimGlobals as G
 
-
-class Net(nn.Module):
-    """docstring for Net"""
-
-    def __init__(self, **kwargs):
-        super(Net, self).__init__()
-
-        self.fc1 = nn.Linear(kwargs['state_count'], 64)
-        self.fc1.weight.data.normal_(0, 0.1)
-        self.fc2 = nn.Linear(64, 32)
-        self.fc2.weight.data.normal_(0, 0.1)
-        self.out = nn.Linear(32, kwargs['action_count'])
-        self.out.weight.data.normal_(0, 0.1)
-
-    def forward(self, x):
-        x = self.fc1(x)
-        x = F.relu(x)
-
-        x = self.fc2(x)
-        x = F.relu(x)
-        # action_prob = self.out(x)
-        return self.out(x)  # action_prob
-
-    def save_me(self, name="eval"):
-        torch.save(self.state_dict(), "{}-outOfBand10.pt".format(name))
-
-    def load_me(self, name="eval"):
-        self.load_state_dict(torch.load("{}-outOfBand10.pt".format(name)))
-
-
-class DQN:
-    """docstring for DQN"""
-
-    def __init__(self, **kwargs):
-        print("{}".format(kwargs))
-        super(DQN, self).__init__()
-
-        self.action_count = kwargs['action_count']
-        self.state_count = kwargs['state_count']
-        net_config = {
-            "action_count": self.action_count,
-            "state_count": self.state_count,
-        }
-        self.eval_net, self.target_net = Net(**net_config), Net(**net_config)
-
-        self.mem_capacity = kwargs['mem_capacity']
-        self.learning_rate = kwargs['learning_rate']
-
-        self.gamma = kwargs['gamma']
-
-        self.epsilon = kwargs['epsilon']
-        self.epsilon_decay = kwargs['epsilon_decay']
-        self.epsilon_min = kwargs['epsilon_min']
-
-        self.nn_update = kwargs['nn_update']
-
-        self.batch_size = kwargs['batch_size']
-
-        self.exploration_strategy = kwargs['exploration_strategy']
-        self.temperature = float(kwargs['temperature'])
-
-        self.learn_step_counter = 0
-        self.step_eps = 0
-
-        self.memory_counter = 0
-        self.memory = np.zeros((self.mem_capacity, self.state_count * 2 + 2))
-        # why the NUM_STATE*2 +2
-        # When we store the memory, we put the state, action, reward and next_state in the memory
-        # here reward and action is a number, state is a ndarray
-        self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=self.learning_rate, eps=0.01,
-                                          weight_decay=0.0001)
-        self.loss_func = nn.MSELoss()
-
-        self.greed_actions = 0
-        self.non_greedy_action = 0
-
-        self.fake_episode = 1
-
-        self.stop_learning = False
-
-    def inc_fake_episode(self):
-        self.fake_episode += 1
-        if self.fake_episode % 1000 == 0:
-            self.temperature = max(0.000001, self.temperature * self.epsilon_decay)
-
-    def epsilon_greedy_strategy(self, state):
-        state = torch.unsqueeze(torch.FloatTensor(state), 0)  # get a 1D array
-
-        if np.random.random(1)[0] > self.epsilon:  # greedy policy
-            self.greed_actions += 1
-            action_value = self.eval_net.forward(state)
-            action = torch.max(action_value, 1)[1].data.numpy()
-            action = action[0]
-            return action, action_value.squeeze(0).detach().numpy()
-        else:  # random policy
-            self.non_greedy_action += 1
-            action = np.random.randint(0, self.action_count)
-            action = action
-            return action, None
-
-    def softmax_strategy(self, state):
-        self.inc_fake_episode()
-        state = torch.unsqueeze(torch.FloatTensor(state), 0)
-        q_values = self.eval_net.forward(state)
-        q_values = q_values.squeeze(0)
-
-        normalised_q = q_values - torch.max(q_values)
-        probs = torch.softmax(normalised_q / self.temperature, -1)
-
-        # log_probs = torch.log(probs)
-        # entropy = torch.sum(-probs * log_probs)
-
-        action_idx = np.random.choice(self.action_count, p=probs.detach().numpy())
-
-        return action_idx, q_values.detach().numpy()
-
-    def choose_action(self, state):
-        self.step_eps += 1
-
-        if self.step_eps % 100 == 0:
-            self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
-
-        if self.exploration_strategy == "softmax":
-            return self.softmax_strategy(state)
-        elif self.exploration_strategy == "epsilon_greedy":
-            return self.epsilon_greedy_strategy(state)
-
-        # q_vals = self.eval_net.forward(state).squeeze(0)
-        # temp = self.get_tempurature()
-        # q_temp = q_vals / temp
-        # probs = torch.softmax(q_temp - torch.max(q_temp), -1)
-        # action_idx = np.random.choice(len(q_temp), p=probs.numpy())
-
-    def store_transition(self, state, action, reward, next_state):
-
-        transition = np.hstack((state, [action, reward], next_state))
-        index = self.memory_counter % self.mem_capacity
-        self.memory[index, :] = transition
-        self.memory_counter += 1
-
-    def reset_epsilon(self, val=0.3):
-        self.epsilon = val
-
-    def reset_mem(self):
-        self.memory_counter = 0
-        self.memory = np.zeros((self.mem_capacity, self.state_count * 2 + 2))
-
-    def stop(self):
-        self.stop_learning = True
-
-    def learn(self):
-
-        # update the parameters
-        if self.step_eps % self.nn_update == 0:
-            self.target_net.load_state_dict(self.eval_net.state_dict())
-        self.learn_step_counter += 1
-
-        # sample batch from memory
-        sample_index = np.random.choice(min(self.mem_capacity, len(self.memory)), self.batch_size)
-        batch_memory = self.memory[sample_index, :]
-        batch_state = torch.FloatTensor(batch_memory[:, :self.state_count])
-        batch_action = torch.LongTensor(batch_memory[:, self.state_count:self.state_count + 1].astype(int))
-        batch_reward = torch.FloatTensor(batch_memory[:, self.state_count + 1:self.state_count + 2])
-        batch_next_state = torch.FloatTensor(batch_memory[:, -self.state_count:])
-
-        # q_eval
-        q_eval = self.eval_net(batch_state).gather(1, batch_action)
-        q_next = self.target_net(batch_next_state).detach()
-        q_target = batch_reward + self.gamma * q_next.max(1)[0].view(self.batch_size, 1)
-        loss = self.loss_func(q_eval, q_target)
-
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
-
+import wandb
 def run(**run_config):
     print("[+] Starting a new run with the following configurations:")
     print("{}".format(run_config))
@@ -197,10 +20,7 @@ def run(**run_config):
     G.INIT_LEARNING_RESOURCES = run_config["learning_resources_count"]
 
     G.init_success_prob(run_config["p_success"])
-    save_to = "P0={} P1={} res={}-{} user={}-{} Greedy={}".format(
-        G.P00, G.P11, run_config["network_resources_count"], run_config["learning_resources_count"],
-        run_config["max_users:0"], run_config["max_users:1"], run_config["use_greedy"]
-    )
+
     simStatCollector = PerfCollector(filename=run_config["sim-id"])
     # init the globals
     env_config = {
@@ -265,12 +85,13 @@ def run(**run_config):
         step=step
     )
 
+
     reward_list = collections.deque(maxlen=100)
 
     greedySelector = GreedyBalancer(g_eps=run_config["g_eps"], g_eps_decay=run_config["g_eps_decay"],
                                     g_eps_min=run_config["g_eps_min"])
-    dqn.eval_net.load_me("models/eval{}".format(450))
-    dqn.target_net.load_me("models/target{}".format(450))
+    # dqn.eval_net.load_me("models/eval{}".format(450))
+    # dqn.target_net.load_me("models/target{}".format(450))
     for i in range(episodes):
 
         accumulated_reward = 0
@@ -282,12 +103,13 @@ def run(**run_config):
         greedySelector.non_greedy = 0
         q = None
         q_count = 0
-        #if i % 50 == 0:
+        # if i % 50 == 0:
         #    dqn.eval_net.save_me("models/eval{}".format(i))
         #    dqn.target_net.save_me("models/target{}".format(i))
 
         for j in range(steps_per_episode):
-            G.update_success_prob(dqn, learning_queue, greedySelector)
+
+            #G.update_success_prob(dqn, learning_queue, greedySelector)
 
             step += 1
 
@@ -308,17 +130,17 @@ def run(**run_config):
                 apply, greedy_selection = greedySelector.act_int_pg(CP=len(learning_queue),
                                                                     UP=(
                                                                         int(info["interruption"][0][1]),
-                                                                        int(info["interruption"][1][1])+2),
+                                                                        int(info["interruption"][1][1]) + 2),
                                                                     DP=(int(state[2]), int(state[3])),
                                                                     E=(info['gp'][0], info['gp'][1]))
             else:
                 apply = False
 
-            if apply:
-                next_state, reward, done, info = env.step(3, greedy_selection)
+            #if apply:
+            #    next_state, reward, done, info = env.step(3, greedy_selection)
                 # print("{}".format(reward))
-            else:
-                next_state, reward, done, info = env.step(action)
+            #else:
+            next_state, reward, done, info = env.step(action)
 
             all_generated_samples += 1
 
@@ -377,10 +199,8 @@ def run(**run_config):
                                         lrho=greedySelector.g_eps, lepsilon=dqn.epsilon
                                         )
 
-            # if done:
-            #    print("episode: {} , the episode reward is {}".format(i, round(ep_reward, 3)))
-            state = next_state
 
+            state = next_state
             wandb.log(
                 {
                     "learner:resources": learning_queue.last_resource_usage
@@ -419,16 +239,7 @@ def run(**run_config):
                     step=step
                 )
 
-            # plotter.push_data(q1=state[2], q2=state[3], r1=state[4], r2=state[5],
-            #                  gp1=info['gp'][0], gp2=info['gp'][1])
-
             accumulated_reward += reward
-
-        # print("greedy: {} -- non-greedy: {}".format(dqn.greed_actions, dqn.non_greedy_action))
-        # plotter.push_episodic_stats(accumulated_reward, dqn.epsilon,
-        #                            average_q_learner=forwarded_samples / float(all_generated_samples))
-
-        # plotter.plot()
 
         print("[+] Step:{}k -- Greedy: {} - ({}) -- Non-Greedy: {} - ({})".format(i, greedySelector.greedy,
                                                                                   env.reward_greedy,
@@ -437,30 +248,6 @@ def run(**run_config):
         reward_list.append(accumulated_reward)
         env.reward_non_greedy = 0
         env.reward_greedy = 0
-
-        if q is not None:
-            # q /= q_count
-
-            wandb.log(
-                {
-                    "learner:performance": np.mean(reward_list),
-                    "learner:epsilon": dqn.epsilon,
-                    "q:0": q[0],
-                    "q:1": q[1],
-                    "q:2": q[2]
-                },
-                step=step
-            )
-        else:
-            wandb.log(
-                {
-                    "learner:performance": np.mean(reward_list),
-                    "learner:epsilon": dqn.epsilon,
-
-                },
-                step=step
-            )
-
         if step >= max_steps:
             return
 
@@ -468,9 +255,9 @@ def run(**run_config):
 # 182.6
 def run_experiments():
     c = {
-        "use_prob_selection": [True],
-        "use_greedy": [True],
-        "queue_type": ["lifo"],
+        "use_prob_selection": [False],
+        "use_greedy": [False],
+        "queue_type": ["fifo"],
         "max_users:0": [16],
         "max_users:1": [17],
         "network_resources_count": [15],
@@ -483,7 +270,7 @@ def run_experiments():
         np.random.seed(0)
         torch.manual_seed(0)
         config = {
-            "sim-id": "Dynammicc({})-mode3".format(c["learning_resources_count"][i]),
+            "sim-id": "test({})-mode3".format(c["learning_resources_count"][i]),
             "use_prob_selection": c["use_prob_selection"][i],
             "use_greedy": c["use_greedy"][i],
             "queue_type": c["queue_type"][i],
@@ -505,18 +292,16 @@ def run_experiments():
             "network_resources_count": c["network_resources_count"][i],
             "learning_resources_count": c["learning_resources_count"][i],
 
-            "max_users:0": c["max_users:0"][i],
-            "max_users:1": c["max_users:1"][i],
+            "max_users:0": c["max_users:0"],
+            "max_users:1": c["max_users:1"],
 
             "drop_rate": 0.0,
 
             "p_success": 1.0,
 
-
-
         }
 
-        wandb.init(reinit=True, config=config, project="costoflearning-extension-mode3")
+        wandb.init(reinit=True, config=config, project="costoflearning-test")
         wandb.run.name = "Sim={}/{},u={}/{},useG={}".format(c["network_resources_count"][i],
                                                             c["learning_resources_count"][i],
                                                             c["max_users:0"][i],

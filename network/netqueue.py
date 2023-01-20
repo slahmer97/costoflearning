@@ -192,15 +192,19 @@ class ExperienceQueue:
         print("[+] Experience Queue was created with init_res: {} -- type: {} -- max_size: {}".format(
             self.allocated_resources, self.queue_type, self.max_size))
 
+        self.stop = False
     def push(self, sample):
+
         if self.queue_type == "fifo":
             if len(self.queue) == self.max_size:
                 self.dropped += 1
             self.queue.append(sample)
-        else:
+        elif self.queue_type == "lifo":
             if self.lifo.qsize() == self.max_size:
                 self.dropped += 1
             self.lifo.put(sample)
+        else:
+            raise Exception("unknown queue type")
         # if len(self.queue) <= self.max_size:
         #    self.queue.append(sample)
         # else:
@@ -225,6 +229,9 @@ class ExperienceQueue:
             self.lifo = queue.LifoQueue(maxsize=self.max_size)
 
     def step(self, additional_resources=0):
+
+        if self.stop:
+            return []
 
         self.last_resource_usage = self.allocated_resources + additional_resources
         assert additional_resources >= 0

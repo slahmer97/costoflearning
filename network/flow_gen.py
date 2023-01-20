@@ -33,7 +33,7 @@ class AggregateOnOffFlowGenerator(FlowGenerator):
         super().__init__(packet_size, req_delay, max_delay, on_rate, flow_class, flow_model, flow_performance, slice)
 
         self.max_users = max_users
-        self.active_users_model = ActiveUsers(max_users=self.max_users, process_name='slice-{}'.format(slice))
+        self.active_users_model = ActiveUsers(max_users=self.max_users, process_name='slice-{}'.format(slice), slice=slice)
 
         # s_{t} = s
         self.current_state = None

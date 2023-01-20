@@ -6,13 +6,13 @@ from matplotlib import pyplot as plt
 
 
 class ActiveUsers:
-    def __init__(self, max_users=2, process_name='A'):
+    def __init__(self, max_users=2, process_name='A', slice=0):
         self.process_name = process_name
         self.max_users = max_users
         self.transitions = np.zeros(shape=(max_users + 1, max_users + 1))
         self.current_state = None
         self.states = np.array([i for i in range(self.max_users + 1)])
-
+        self.slice = slice
         for i in range(0, max_users + 1):
             sum = 0
             for j in range(0, max_users + 1):
@@ -31,8 +31,8 @@ class ActiveUsers:
         N = self.max_users
         for l in range(l_min, l_max + 1):
             term1 = np.math.comb(h, l) * np.math.comb(N - h, j - l)
-            term2 = np.power(SimGlobals.P11, l) * np.power(SimGlobals.P01, j - l) * np.power(SimGlobals.P10, h - l) * \
-                    np.power(SimGlobals.P00, self.max_users - h - j + l)
+            term2 = np.power(SimGlobals.Transitions[self.slice][1][1], l) * np.power(SimGlobals.Transitions[self.slice][0][1], j - l) * np.power(SimGlobals.Transitions[self.slice][1][0], h - l) * \
+                    np.power(SimGlobals.Transitions[self.slice][0][0], self.max_users - h - j + l)
             sum += term1 * term2
         return sum
 

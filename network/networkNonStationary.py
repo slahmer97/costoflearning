@@ -12,8 +12,33 @@ class Network(gym.Env):
     def render(self, mode="human"):
         pass
 
-    def __init__(self, **kwargs):
+    def move_system(self):
+        self.coherent_period_index += 1
 
+        self.slice_0_flows["max_users"] = self.slice_0_users[self.coherent_period_index]
+        self.slice_1_flows["max_users"] = self.slice_1_users[self.coherent_period_index]
+
+        self.generators = []
+
+        for conf in self.slice_0_flows:
+            self.generators.append(AggregateOnOffFlowGenerator(**conf))
+
+        for conf in self.slice_1_flows:
+            self.generators.append(AggregateOnOffFlowGenerator(**conf))
+        r1, r2 = self.get_expected_rates()  # packets per second
+        total_number_of_packets = G.TOTAL_LINK_BANDWIDTH / self.packet_size
+        self.total_number_of_packets_per_slot = total_number_of_packets * G.NET_TIMESLOT_DURATION_S
+
+        print("[+] Moving the system -- Coherent Period index ({}):".format(self.coherent_period_index))
+        print("[+] Total available bandwidth: {} b/s -- {} b/slot".format(total_number_of_packets * 512,
+                                                                          self.total_number_of_packets_per_slot * 512))
+        print("[+] Expected number of packets:\n"
+              "\t slice1 : {} byte/sec -- {} byte/slot\n"
+              "\t slice2 : {} byte/sec -- {} byte/slot\n".format(r1, r1 * G.NET_TIMESLOT_DURATION_S,
+                                                                 r2, r2 * G.NET_TIMESLOT_DURATION_S))
+
+    def __init__(self, **kwargs):
+        self.coherent_period_index = 0
         self.was_greedy = False
         self.last_values = (None, None)
 
@@ -22,9 +47,12 @@ class Network(gym.Env):
         self.action_space = spaces.Discrete(3)
         self.observation_space = spaces.Box(low=0, high=1500, shape=(6,), dtype=np.float32)
         self.packet_size = 512.0  # bits
+        self.slice_0_users = kwargs["max_users:0"]
+        self.slice_1_users = kwargs["max_users:1"]
+
         self.slice_0_flows = [
             {
-                'max_users': kwargs["max_users:0"],
+                'max_users': self.slice_0_users[0],
                 "packet_size": self.packet_size,
                 "req_delay": 0.300,
                 "max_delay": np.infty,
@@ -39,7 +67,7 @@ class Network(gym.Env):
 
         self.slice_1_flows = [
             {
-                'max_users': kwargs["max_users:1"],
+                'max_users': self.slice_1_users[0],
                 "packet_size": self.packet_size,
                 "req_delay": 0.055,
                 "max_delay": 0.1000,
@@ -50,9 +78,7 @@ class Network(gym.Env):
                 "slice": 1,
             }
         ]
-        self.normaliser = np.array(
-            [float(kwargs["max_users:0"]), float(kwargs["max_users:1"]), 1500.0, 1500.0, G.RESOURCES_COUNT,
-             G.RESOURCES_COUNT])
+
         self.action0 = 0
         self.action1 = 0
         self.action2 = 0
@@ -97,36 +123,11 @@ class Network(gym.Env):
         def reward_func4(obj, drop1, dead2, cum_cost2, resent2, served2):
             normalized_cost1 = - drop1 / obj.slice_0_flows[0]["max_users"]
 
-            normalized_cost2 = (cum_cost2 - dead2) / obj.slice_1_flows[0]["max_users"]
+            normalized_cost2 = - dead2 / obj.slice_1_flows[0]["max_users"]
 
             # print("\t normalized_cost2: {}".format(normalized_cost2))
 
-            return 0.2 * normalized_cost1 + 0.8 * normalized_cost2
-
-        def reward_func3(obj, q1, dead1, drop1, q2, dead2, drop2):
-            normalized_drop1 = drop1 / obj.slice_0_flows[0]["max_users"]
-
-            normalized_dead2 = dead2 / obj.slice_1_flows[0]["max_users"]
-            return - normalized_drop1 - np.exp(normalized_dead2) + 1
-
-        def reward_func2(q1, d1, q2, d2):
-            normalized_q1 = q1 / 1500.0
-            normalized_d1 = d1
-
-            normalized_q2 = q2 / 1500.0
-            normalized_d2 = np.exp(d2 / 1500.0)
-
-            normalized_diff = abs((q1 - q2) / 1500.0)
-
-            return - normalized_q1 - np.exp(normalized_q2) - normalized_diff
-
-        def reward_func(q1, q2):
-            normalized_q1 = q1 / 1500.0
-            normalized_q2 = q2 / 1500.0
-            normalized_diff = abs((q1 - q2) / 1500.0)
-            term1 = - pow(q1, 1) / 1500.0
-            term2 = - pow(q2, 1) / 1500.0
-            return - normalized_q1 - normalized_q2 - normalized_diff
+            return normalized_cost1 + normalized_cost2
 
         tmp_state = []
         stats = []
@@ -224,16 +225,12 @@ class Network(gym.Env):
 
         ret_reward = reward_func4(obj=self, drop1=drop1, dead2=dead2, cum_cost2=cum_cost2, resent2=resent2,
                                   served2=served2)
-        # ret_reward = reward_func3(obj=self, q1=self.state[2], dead1=s[0][3], drop1=s[0][1], q2=self.state[3],
-        #                          dead2=s[1][3], drop2=s[1][1])
-        # ret_reward = reward_func2(self.state[2], s[0][3], self.state[3], s[1][3])
-        # ret_reward = reward_func(self.state[2], self.state[3])
         if self.was_greedy:
             self.reward_greedy += ret_reward
         else:
             self.reward_non_greedy += ret_reward
 
-        return np.array(self.state) / self.normaliser, ret_reward, done, info
+        return np.array(self.state), ret_reward, done, info
 
     def reset(self, **kwargs):
         self.action0 = 0
@@ -247,7 +244,7 @@ class Network(gym.Env):
         self.init_resources()
         self.state = [lambda_1, lambda_2, len(self.slices[0]), len(self.slices[1]), self.slices[0].allocated_resources,
                       self.slices[1].allocated_resources]
-        return np.array(self.state) / self.normaliser
+        return np.array(self.state)
 
     def set_end(self):
         self.end = True
