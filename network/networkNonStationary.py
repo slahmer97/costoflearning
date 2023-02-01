@@ -14,9 +14,11 @@ class Network(gym.Env):
 
     def move_system(self):
         self.coherent_period_index += 1
+        print("[+] Moving the system -- Coherent Period index ({}):".format(self.coherent_period_index))
 
-        self.slice_0_flows["max_users"] = self.slice_0_users[self.coherent_period_index]
-        self.slice_1_flows["max_users"] = self.slice_1_users[self.coherent_period_index]
+
+        self.slice_0_flows[0]["max_users"] = self.slice_0_users[self.coherent_period_index]
+        self.slice_1_flows[0]["max_users"] = self.slice_1_users[self.coherent_period_index]
 
         self.generators = []
 
@@ -28,8 +30,8 @@ class Network(gym.Env):
         r1, r2 = self.get_expected_rates()  # packets per second
         total_number_of_packets = G.TOTAL_LINK_BANDWIDTH / self.packet_size
         self.total_number_of_packets_per_slot = total_number_of_packets * G.NET_TIMESLOT_DURATION_S
-
-        print("[+] Moving the system -- Coherent Period index ({}):".format(self.coherent_period_index))
+        lambda_1, _ = self.generators[0].reset()
+        lambda_2, _ = self.generators[1].reset()
         print("[+] Total available bandwidth: {} b/s -- {} b/slot".format(total_number_of_packets * 512,
                                                                           self.total_number_of_packets_per_slot * 512))
         print("[+] Expected number of packets:\n"
@@ -69,8 +71,8 @@ class Network(gym.Env):
             {
                 'max_users': self.slice_1_users[0],
                 "packet_size": self.packet_size,
-                "req_delay": 0.055,
-                "max_delay": 0.1000,
+                "req_delay": 0.0500,
+                "max_delay": 0.0700,
                 "on_rate": 512000,  # bits per second
                 "flow_class": 'critical-audio',
                 "flow_model": 'unicast',
@@ -109,9 +111,9 @@ class Network(gym.Env):
                                                                  r2, r2 * G.NET_TIMESLOT_DURATION_S))
 
     def init_resources(self):
-        res = np.random.randint(G.RESOURCES_COUNT + 1, size=1)[0]
-        self.slices[0].allocate_resource(res)
-        self.slices[1].allocate_resource(G.RESOURCES_COUNT - res)
+        res = 10
+        self.slices[0].allocate_resource(G.RESOURCES_COUNT - res)
+        self.slices[1].allocate_resource(res)
 
     def reset_values(self):
         if self.was_greedy:
@@ -123,11 +125,11 @@ class Network(gym.Env):
         def reward_func4(obj, drop1, dead2, cum_cost2, resent2, served2):
             normalized_cost1 = - drop1 / obj.slice_0_flows[0]["max_users"]
 
-            normalized_cost2 = - dead2 / obj.slice_1_flows[0]["max_users"]
+            normalized_cost2 = (cum_cost2 - dead2) / obj.slice_1_flows[0]["max_users"]
 
             # print("\t normalized_cost2: {}".format(normalized_cost2))
-
-            return normalized_cost1 + normalized_cost2
+            coeiff = 0.25
+            return coeiff * normalized_cost1 + (1 - coeiff) * normalized_cost2
 
         tmp_state = []
         stats = []
@@ -192,13 +194,18 @@ class Network(gym.Env):
         interrupt1, interrupt_count1 = self.slices[1].can_interrupt_next()
 
         info = {
+            "resources": [self.state[4], self.state[5]],
+            "queue_size": [self.state[2], self.state[3]],
+            "active_users": [self.state[0], self.state[1]],
+            "incoming_traffic": [stats[0], stats[1]],
+            "packet_drop": [s[0][1], s[1][1]],
+            "packet_dead": [s[0][3], s[1][3]],
+            "packet_urgent": [interrupt_count0, interrupt_count1],
+            "packet_resent": [s[0][9], s[1][9]],
+            "packet_served": [served_packets[0], served_packets[1]],
+            "packet_latency": [s[0][8], s[1][8]],
             "episode": 0,
-            "gp": stats,
-            "served_packets": served_packets,
-            "s0": s[0],
-            "s1": s[1],
 
-            "interruption": [(interrupt0, interrupt_count0), (interrupt1, interrupt_count1)]
         }
 
         done = self.end
@@ -229,8 +236,8 @@ class Network(gym.Env):
             self.reward_greedy += ret_reward
         else:
             self.reward_non_greedy += ret_reward
-
-        return np.array(self.state), ret_reward, done, info
+        nor = np.array([1, 1, 1500, 1500, 1, 1])
+        return np.array(self.state) / nor, ret_reward, done, info
 
     def reset(self, **kwargs):
         self.action0 = 0

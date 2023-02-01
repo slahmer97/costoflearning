@@ -13,16 +13,21 @@ class GreedyBalancer:
         self.greedy = 0
         self.non_greedy = 0
 
-    def reset_gepsilon(self, val=0.1, step=180000):
-        self.g_eps = val
-        self.step = step
+    # def reset_gepsilon(self, val=0.1, step=180000):
+    #    self.g_eps = val
+    #    self.step = step
+    def reset_gepsilon(self):
+        self.step = 0
 
     def act_int_pg(self, CP, UP, DP, E):
         self.step += 1
         if self.step % 1000 == 0:
             # self.g_eps = max(self.g_eps_min, self.g_eps * self.g_eps_decay)
-            self.g_eps = -7.96e-7 * self.step + 3.0 / 15.0
+            # self.g_eps = -7.96e-7 * self.step + 3.0 / 15.0
+            # self.g_eps = max(self.g_eps, self.g_eps_min)
+            self.g_eps = - 0.0000018 * self.step + 0.2
             self.g_eps = max(self.g_eps, self.g_eps_min)
+
         if np.random.random(1)[0] > self.g_eps or self.step == 1:
             self.non_greedy += 1
             return False, (None, None, None)
@@ -42,9 +47,9 @@ class GreedyBalancer:
 
         prob += X0 + X1 + X2 <= 15, "c0"
 
-        prob += X0 <= min(DP[0] + E[0], 15), "c1"
+        prob += X0 <= min(DP[0] + E[0], 5), "c1"
 
-        prob += X1 <= min(DP[1] + E[1], 15), "c2"
+        prob += X1 <= min(DP[1] + E[1], 8), "c2"
 
         prob += Z0 >= min(DP[0] + E[0] - 1200, 15) - X0, "c3"
 
@@ -65,6 +70,7 @@ class GreedyBalancer:
             if v.name[0] == "X":
                 ret += (int(v.varValue),)
                 sum += int(v.varValue)
+
         # Print the value of the objective
         # print("objective=", value(prob.objective))
         if sum < 15:
@@ -74,7 +80,9 @@ class GreedyBalancer:
             ret = tuple(tmp)
 
         assert ret[0] + ret[1] + ret[2] == 15
-            # print(sum, ret)
+
+        # print("res[0]={},res[1]={},res[2]={}".format(ret[0], ret[1], ret[2]))
+        # print(sum, ret)
         return True, ret
 
     def act(self, control_plane_packets, urgent_packets, data_plane_packets, expected_arrivals):

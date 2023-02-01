@@ -64,7 +64,6 @@ class NetQueue:
 
             self.temp_total_served += 1
             self.perm_total_served += 1
-
             served_packet = self.get()
             available_bandwidth -= served_packet.size
             served_packet.served_at = SimGlobals.NET_TIMESLOT_STEP
@@ -114,9 +113,10 @@ class NetQueue:
         return counter
 
     def reset_temp_stats(self):
-        self.stats.append(
-            (SimGlobals.NET_TIMESLOT_STEP, self.temp_total_enqueued, self.temp_total_served, self.temp_total_dropped,
-             len(self.queue)))
+
+       # self.stats.append(
+       #     (SimGlobals.NET_TIMESLOT_STEP, self.temp_total_enqueued, self.temp_total_served, self.temp_total_dropped,
+       #      len(self.queue)))
 
         self.temp_total_enqueued = 0
         self.temp_total_served = 0
