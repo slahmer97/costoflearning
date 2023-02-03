@@ -83,10 +83,11 @@ class DQN:
 
         self.stop_learning = False
 
-    def inc_fake_episode(self):
-        self.fake_episode += 1
-        if self.fake_episode % 1000 == 0:
-            self.temperature = max(0.000001, self.temperature * self.epsilon_decay)
+
+        self.slope = 1
+        self.start = 1.0
+
+        self.i = 0
 
     def epsilon_greedy_strategy(self, state):
         state = torch.unsqueeze(torch.FloatTensor(state), 0)  # get a 1D array
@@ -96,39 +97,30 @@ class DQN:
             action_value = self.eval_net.forward(state)
             action = torch.max(action_value, 1)[1].data.numpy()
             action = action[0]
-            return action, action_value.squeeze(0).detach().numpy()
+            return action, 0, action_value.squeeze(0).detach().numpy()
         else:  # random policy
             self.non_greedy_action += 1
             action = np.random.randint(0, self.action_count)
             action = action
-            return action, None
+            return action, 1, None
 
     def softmax_strategy(self, state):
-        self.inc_fake_episode()
-        state = torch.unsqueeze(torch.FloatTensor(state), 0)
-        q_values = self.eval_net.forward(state)
-        q_values = q_values.squeeze(0)
-
-        normalised_q = q_values - torch.max(q_values)
-        probs = torch.softmax(normalised_q / self.temperature, -1)
-
-        # log_probs = torch.log(probs)
-        # entropy = torch.sum(-probs * log_probs)
-
-        action_idx = np.random.choice(self.action_count, p=probs.detach().numpy())
-
-        return action_idx, q_values.detach().numpy()
+        return None, None
 
     def choose_action(self, state):
         self.step_eps += 1
 
-        if self.step_eps % 100 == 0:
-            self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+        from network.globsim import SimGlobals
+        if self.i % 1000 == 0:
+            currentStep =  int(self.i / 1000)
+            self.epsilon = self.start * np.exp(self.slope * currentStep)
+            self.epsilon = max(self.epsilon_min, self.epsilon)
 
-        if self.exploration_strategy == "softmax":
-            return self.softmax_strategy(state)
-        elif self.exploration_strategy == "epsilon_greedy":
+        self.i += 1
+        if self.exploration_strategy == "epsilon_greedy":
             return self.epsilon_greedy_strategy(state)
+        else:
+            raise Exception("unknown exploration strategy")
 
         # q_vals = self.eval_net.forward(state).squeeze(0)
         # temp = self.get_tempurature()
@@ -143,8 +135,12 @@ class DQN:
         self.memory[index, :] = transition
         self.memory_counter += 1
 
-    def reset_epsilon(self, val=0.3):
-        self.epsilon = val
+    def reset_epsilon(self, start=0.3, end=100):
+        self.start = start
+        self.epsilon = start
+        self.slope = np.log(self.epsilon_min / self.start) / end
+        self.i = 0
+        print("nez eps: {} -- slope: {} -- start: {} -- end: {}".format(self.epsilon, self.slope, start, end))
 
     def reset_mem(self):
         self.memory_counter = 0

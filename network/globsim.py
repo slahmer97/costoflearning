@@ -52,18 +52,17 @@ class SimGlobals:
 
     @staticmethod
     def update_success_prob(dqn, learning_queue, greedySelector):
-
-        if SimGlobals.NET_TIMESLOT_STEP % 1000000 == 0:
+        if SimGlobals.NET_TIMESLOT_STEP % 500000 == 0:
             # SimGlobals.success_prob = SimGlobals.capacity_seq[SimGlobals.my_counter]
             SimGlobals.my_counter += 1
-            #learning_queue.stop = True
+            # learning_queue.stop = True
 
-            dqn.reset_epsilon(0.3)
-            greedySelector.reset_gepsilon()
+            dqn.reset_epsilon(1.0, 100)
+            greedySelector.reset_gepsilon(100)
             dqn.reset_mem()
             learning_queue.reset()
             print("Updated Greedy Selection")
-            #print("Changed Success Probability: {}".format(SimGlobals.success_prob))
+            # print("Changed Success Probability: {}".format(SimGlobals.success_prob))
 
     @staticmethod
     def send_success():

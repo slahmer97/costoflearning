@@ -12,12 +12,14 @@ class GreedyBalancer:
 
         self.greedy = 0
         self.non_greedy = 0
+        self.slope = - 0.0000018
 
     # def reset_gepsilon(self, val=0.1, step=180000):
     #    self.g_eps = val
     #    self.step = step
-    def reset_gepsilon(self):
+    def reset_gepsilon(self, end=100):
         self.step = 0
+        self.slope = (self.g_eps_min - 0.2) / float(end * 1000)
 
     def act_int_pg(self, CP, UP, DP, E):
         self.step += 1
@@ -25,7 +27,7 @@ class GreedyBalancer:
             # self.g_eps = max(self.g_eps_min, self.g_eps * self.g_eps_decay)
             # self.g_eps = -7.96e-7 * self.step + 3.0 / 15.0
             # self.g_eps = max(self.g_eps, self.g_eps_min)
-            self.g_eps = - 0.0000018 * self.step + 0.2
+            self.g_eps = self.slope * self.step + 0.2
             self.g_eps = max(self.g_eps, self.g_eps_min)
 
         if np.random.random(1)[0] > self.g_eps or self.step == 1:

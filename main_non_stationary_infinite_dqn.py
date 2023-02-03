@@ -94,7 +94,7 @@ def run(**run_config):
     dqn.eval_net.load_me("models/eval{}".format(600))
     dqn.target_net.load_me("models/target{}".format(600))
     for i in range(episodes):
-        if i in [1000, 2000, 3000, 4000]:
+        if i in [500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]:
             env.move_system()
         accumulated_reward = 0
         queue_learner = []
@@ -118,7 +118,7 @@ def run(**run_config):
             ql_size = len(learning_queue)
             queue_learner.append(ql_size)
 
-            action, q_vals = dqn.choose_action(state)
+            action, action_type, q_vals = dqn.choose_action(state)
 
             if q_vals is not None:
                 if q is not None:
@@ -142,11 +142,14 @@ def run(**run_config):
 
             if apply:
                 next_state, reward, done, info = env.step(3, greedy_selection)
-                #print("{}".format(reward))
+                # print("{}".format(reward))
             else:
                 next_state, reward, done, info = env.step(action)
 
             all_generated_samples += 1
+
+            def probDropLearningSample(lqueue, action_type, eps):
+                return 0
 
             new_drp_rate = len(learning_queue) / 1500.0
 
@@ -293,7 +296,7 @@ def run_experiments():
         # "max_users:0": [15, 28, 25, 7, 20, 15, 19, 18, 15, 36],
         # "max_users:1": [19, 10, 12, 25, 16, 20, 17, 17, 19, 5],
         "max_users:0": [21, 28, 24, 14],
-        "max_users:1": [15, 10, 13, 20],
+        "max_users:1": [18, 13, 16, 23],
         "network_resources_count": [15],
         "learning_resources_count": [0]
     }
@@ -304,7 +307,7 @@ def run_experiments():
         np.random.seed(0)
         torch.manual_seed(0)
         config = {
-            "sim-id": "dynamic1M",
+            "sim-id": "Dynamic500kLoaded",
             "use_prob_selection": c["use_prob_selection"][i],
             "use_greedy": c["use_greedy"][i],
             "queue_type": c["queue_type"][i],
