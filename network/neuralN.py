@@ -83,7 +83,6 @@ class DQN:
 
         self.stop_learning = False
 
-
         self.slope = 1
         self.start = 1.0
 
@@ -112,7 +111,7 @@ class DQN:
 
         from network.globsim import SimGlobals
         if self.i % 1000 == 0:
-            currentStep =  int(self.i / 1000)
+            currentStep = int(self.i / 1000)
             self.epsilon = self.start * np.exp(self.slope * currentStep)
             self.epsilon = max(self.epsilon_min, self.epsilon)
 
@@ -155,7 +154,7 @@ class DQN:
         if self.step_eps % self.nn_update == 0:
             self.target_net.load_state_dict(self.eval_net.state_dict())
         self.learn_step_counter += 1
-
+        print("Learning")
         # sample batch from memory
         sample_index = np.random.choice(min(self.mem_capacity, len(self.memory)), self.batch_size)
         batch_memory = self.memory[sample_index, :]

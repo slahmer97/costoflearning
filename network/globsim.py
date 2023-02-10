@@ -58,7 +58,7 @@ class SimGlobals:
             # learning_queue.stop = True
 
             dqn.reset_epsilon(1.0, 100)
-            greedySelector.reset_gepsilon(100)
+            #greedySelector.reset_gepsilon(100)
             dqn.reset_mem()
             learning_queue.reset()
             print("Updated Greedy Selection")

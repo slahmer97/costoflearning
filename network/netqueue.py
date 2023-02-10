@@ -1,5 +1,3 @@
-import queue
-from queue import Queue
 from .packet import Packet
 from .globsim import SimGlobals
 from collections import deque
@@ -180,7 +178,7 @@ class ExperienceQueue:
         if queue_type == "fifo":
             self.queue = deque(maxlen=self.max_size)
         else:
-            self.lifo = queue.LifoQueue(maxsize=self.max_size)
+            self.lifo = deque(maxlen=self.max_size)
 
         self.allocated_resources = init
 
@@ -200,9 +198,9 @@ class ExperienceQueue:
                 self.dropped += 1
             self.queue.append(sample)
         elif self.queue_type == "lifo":
-            if self.lifo.qsize() == self.max_size:
+            if len(self.lifo) == self.max_size:
                 self.dropped += 1
-            self.lifo.put(sample)
+            self.lifo.append(sample)
         else:
             raise Exception("unknown queue type")
         # if len(self.queue) <= self.max_size:
@@ -214,19 +212,19 @@ class ExperienceQueue:
         if self.queue_type == "fifo":
             return len(self.queue)
         else:
-            return self.lifo.qsize()
+            return len(self.lifo)
 
     def get(self):
         if self.queue_type == "fifo":
             return self.queue.popleft()
         else:
-            return self.lifo.get()
+            return self.lifo.pop()
 
     def reset(self):
         if self.queue_type == "fifo":
             self.queue = deque(maxlen=self.max_size)
         else:
-            self.lifo = queue.LifoQueue(maxsize=self.max_size)
+            self.lifo = deque(maxlen=self.max_size)
 
     def step(self, additional_resources=0):
 

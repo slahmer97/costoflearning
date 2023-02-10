@@ -95,6 +95,7 @@ def run(**run_config):
     dqn.target_net.load_me("models/target{}".format(600))
     for i in range(episodes):
         if i in [500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]:
+
             env.move_system()
         accumulated_reward = 0
         queue_learner = []
@@ -150,8 +151,12 @@ def run(**run_config):
 
             def probDropLearningSample(lqueue, action_type, eps):
                 return 0
-
+            if i == 5 and j == 271:
+                print("Here")
             new_drp_rate = len(learning_queue) / 1500.0
+            #if action_type == 1 and not apply:
+            #    new_drp_rate = 0.0
+
 
             # if drop_rate <= np.random.random(1)[0] and not apply:
             if run_config["use_prob_selection"] and new_drp_rate <= np.random.random(1)[0] and not apply:
@@ -290,24 +295,28 @@ def run(**run_config):
 # 182.6
 def run_experiments():
     c = {
-        "use_prob_selection": [True],
-        "use_greedy": [True],
-        "queue_type": ["lifo"],
+        "use_prob_selection": [False],
+        "use_greedy": [False],
+        "queue_type": ["fifo"],
         # "max_users:0": [15, 28, 25, 7, 20, 15, 19, 18, 15, 36],
         # "max_users:1": [19, 10, 12, 25, 16, 20, 17, 17, 19, 5],
-        "max_users:0": [21, 28, 24, 14],
-        "max_users:1": [18, 13, 16, 23],
+        "max_users:0": [19, 26, 23, 15],
+        "max_users:1": [19, 14, 16, 20],
+        #"max_users:0": [15, 26, 23, 15],
+        #"max_users:1": [20, 14, 16, 20],
         "network_resources_count": [15],
-        "learning_resources_count": [0]
+        "learning_resources_count": [10]
     }
 
     strategy = "epsilon_greedy"
     for i in range(0, len(c["use_greedy"])):
-        random.seed(0)
-        np.random.seed(0)
-        torch.manual_seed(0)
+        random.seed(1)
+        np.random.seed(1)
+        torch.manual_seed(1)
+
+        id = "ofb-final-steps2M-Seed1"
         config = {
-            "sim-id": "Dynamic500kLoaded",
+            "sim-id": id,
             "use_prob_selection": c["use_prob_selection"][i],
             "use_greedy": c["use_greedy"][i],
             "queue_type": c["queue_type"][i],
@@ -339,11 +348,7 @@ def run_experiments():
         }
 
         wandb.init(reinit=True, config=config, project="costoflearning-test")
-        wandb.run.name = "Sim={}/{},u={}/{},useG={}".format(c["network_resources_count"][i],
-                                                            c["learning_resources_count"][i],
-                                                            c["max_users:0"][i],
-                                                            c["max_users:1"][i], 0.0,
-                                                            config["use_greedy"])
+        wandb.run.name = id
         wandb.run.save()
 
         run(**config)

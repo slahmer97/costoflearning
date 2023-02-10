@@ -17,9 +17,12 @@ class GreedyBalancer:
     # def reset_gepsilon(self, val=0.1, step=180000):
     #    self.g_eps = val
     #    self.step = step
-    def reset_gepsilon(self, end=100):
+    def reset_gepsilon(self, end=60):
+        self.slope = np.log(self.g_eps_min / 0.2) / end
+        self.i = 0
+
         self.step = 0
-        self.slope = (self.g_eps_min - 0.2) / float(end * 1000)
+        # self.slope = (self.g_eps_min - 0.20) / float(end * 1000)
 
     def act_int_pg(self, CP, UP, DP, E):
         self.step += 1
@@ -27,7 +30,10 @@ class GreedyBalancer:
             # self.g_eps = max(self.g_eps_min, self.g_eps * self.g_eps_decay)
             # self.g_eps = -7.96e-7 * self.step + 3.0 / 15.0
             # self.g_eps = max(self.g_eps, self.g_eps_min)
-            self.g_eps = self.slope * self.step + 0.2
+            currentStep = int(self.step / 1000)
+            self.g_eps = 0.2 * np.exp(self.slope * currentStep)
+
+            # self.g_eps = self.slope * self.step + 0.18
             self.g_eps = max(self.g_eps, self.g_eps_min)
 
         if np.random.random(1)[0] > self.g_eps or self.step == 1:
@@ -51,7 +57,7 @@ class GreedyBalancer:
 
         prob += X0 <= min(DP[0] + E[0], 5), "c1"
 
-        prob += X1 <= min(DP[1] + E[1], 8), "c2"
+        prob += X1 <= min(DP[1] + E[1], 5), "c2"
 
         prob += Z0 >= min(DP[0] + E[0] - 1200, 15) - X0, "c3"
 
