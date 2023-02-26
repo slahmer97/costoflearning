@@ -122,14 +122,25 @@ class Network(gym.Env):
             self.slices[1].allocate_resource(self.last_values[1])
 
     def step(self, action=None, greedy_selection=None):
-        def reward_func4(obj, drop1, dead2, cum_cost2, resent2, served2):
-            normalized_cost1 = - drop1 / obj.slice_0_flows[0]["max_users"]
+        def reward_func4(obj, drop1, dead2, cum_cost2, resent2, served1, served2):
+            nor1 = served1 + drop1
+            nor2 = served2 + dead2
 
-            normalized_cost2 = (cum_cost2 - dead2) / obj.slice_1_flows[0]["max_users"]
+            if nor1 != 0:
+                normalized_cost1 = - drop1 / nor1
+            else:
+                normalized_cost1 = 0
 
+            if nor2 != 0:
+                normalized_cost2 = (cum_cost2 - dead2) / nor2
+            else:
+                normalized_cost2 = 0
             # print("\t normalized_cost2: {}".format(normalized_cost2))
-            coeiff = 0.25
-            return coeiff * normalized_cost1 + (1 - coeiff) * normalized_cost2
+            assert cum_cost2 <= 0.0
+            #print("\tserved1={} -- served2={} -- total={}".format(served1, served2, served1+served2))
+            assert served2+served1 <= 15
+            coeiff = 0.35
+            return coeiff * normalized_cost1 + (1 - coeiff) * normalized_cost2,  normalized_cost1*nor1, normalized_cost2*nor2
 
         tmp_state = []
         stats = []
@@ -221,8 +232,8 @@ class Network(gym.Env):
         cum_latency1 = s[0][8]
         cum_latency2 = s[1][8]
 
-        served1 = s[0][2]
-        served2 = s[1][2]
+        served1 = served_packets[0]
+        served2 = served_packets[1]
 
         resent1 = s[0][9]
         resent2 = s[1][9]
@@ -231,11 +242,12 @@ class Network(gym.Env):
         cum_cost2 = s[1][11]
 
         ret_reward = reward_func4(obj=self, drop1=drop1, dead2=dead2, cum_cost2=cum_cost2, resent2=resent2,
-                                  served2=served2)
+                                  served2=served2, served1=served1)
         if self.was_greedy:
-            self.reward_greedy += ret_reward
+            self.reward_greedy += ret_reward[0]
         else:
-            self.reward_non_greedy += ret_reward
+            self.reward_non_greedy += ret_reward[0]
+
         nor = np.array([1, 1, 1500, 1500, 1, 1])
         return np.array(self.state) / nor, ret_reward, done, info
 

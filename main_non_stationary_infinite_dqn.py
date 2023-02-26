@@ -91,8 +91,10 @@ def run(**run_config):
 
     greedySelector = GreedyBalancer(g_eps=run_config["g_eps"], g_eps_decay=run_config["g_eps_decay"],
                                     g_eps_min=run_config["g_eps_min"])
-    dqn.eval_net.load_me("models/eval{}".format(600))
-    dqn.target_net.load_me("models/target{}".format(600))
+    dqn.eval_net.load_me("offline-models/eval{}".format(100))
+    dqn.target_net.load_me("offline-models/target{}".format(100))
+    G.update_success_prob(dqn, learning_queue, greedySelector)
+
     for i in range(episodes):
         if i in [500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]:
             env.move_system()
@@ -106,12 +108,14 @@ def run(**run_config):
         q = None
         q_count = 0
         # if i % 100 == 0:
-        #    dqn.eval_net.save_me("models/eval{}".format(i))
-        #    dqn.target_net.save_me("models/target{}".format(i))
+        #    dqn.eval_net.save_me("offline-models/eval{}".format(i))
+        #    dqn.target_net.save_me("offline-models/target{}".format(i))
+        cost1 = 0
+        cost2 = 0
+        served1 = 0
+        served2 = 0
 
         for j in range(steps_per_episode):
-
-            G.update_success_prob(dqn, learning_queue, greedySelector)
 
             step += 1
 
@@ -141,15 +145,12 @@ def run(**run_config):
                 apply = False
 
             if apply:
-                next_state, reward, done, info = env.step(3, greedy_selection)
+                next_state, (reward, c1, c2), done, info = env.step(3, greedy_selection)
                 # print("{}".format(reward))
             else:
-                next_state, reward, done, info = env.step(action)
+                next_state, (reward, c1, c2), done, info = env.step(action)
 
             all_generated_samples += 1
-
-            def probDropLearningSample(lqueue, action_type, eps):
-                return 0
 
             new_drp_rate = len(learning_queue) / 1500.0
             if action_type == 1:
@@ -216,13 +217,13 @@ def run(**run_config):
             )
 
             state = next_state
-            wandb.log(
-                {
-                    "learner:resources": learning_queue.last_resource_usage
-                },
-                step=step
-            )
-
+            # wandb.log(
+            #    {
+            #        "learner:resources": learning_queue.last_resource_usage
+            #    },
+            #    step=step
+            # )
+            """
             if step % 10 == 0:
                 wandb.log(
                     {
@@ -251,13 +252,20 @@ def run(**run_config):
                     },
                     step=step
                 )
-
+                """
             accumulated_reward += reward
+            cost1 += c1
+            cost2 += c2
+            served1 += info["packet_served"][0]
+            served2 += info["packet_served"][1]
 
-        print("[+] Step:{}k -- Greedy: {} - ({}) -- Non-Greedy: {} - ({})".format(i, greedySelector.greedy,
-                                                                                  env.reward_greedy,
-                                                                                  greedySelector.non_greedy,
-                                                                                  env.reward_non_greedy))
+        # print("[+] Step:{}k -- Greedy: {} - ({}) -- Non-Greedy: {} - ({})".format(i, greedySelector.greedy,
+        #                                                                          env.reward_greedy,
+        #                                                                          greedySelector.non_greedy,
+        #                                                                          env.reward_non_greedy))
+
+        print(
+            f"step= {i} -- reward= {env.reward_non_greedy} -- cost1= {cost1} {served1} --cost2= {cost2} {served2} epsilon= {dqn.epsilon}")
         reward_list.append(accumulated_reward)
         env.reward_non_greedy = 0
         env.reward_greedy = 0
@@ -291,19 +299,24 @@ def run(**run_config):
 # 182.6
 def run_experiments():
     c = {
-        "use_prob_selection": [True],
-        "use_greedy": [True],
-        "queue_type": ["lifo"],
+        "use_prob_selection": [False],
+        "use_greedy": [False],
+        "queue_type": ["fifo"],
         # "max_users:0": [15, 28, 25, 7, 20, 15, 19, 18, 15, 36],
-        # "max_users:1": [19, 10, 12, 25, 16, 20, 17, 17, 19, 5],
-        "max_users:0": [21, 28, 24, 14],
-        "max_users:1": [19, 14, 17, 22],
+        # "max_users:1": [15, 14, 17, 22],
+        "max_users:0": [22, 22, 22, 21, 21, 21, 20, 20, 20, 19, 19, 19, 25, 24, 23, 19, 22, 21, 20, 19, 25, 24, 23, 22, 21, 20, 19, 24, 23, 22, 21, 20,
+                        19, 18, 18, 18, 18, 18,
+                        18],
+
+        "max_users:1": [20, 19, 18, 20, 19, 18, 20, 19, 18, 20, 19, 18, 17, 17, 17, 19, 17, 17, 17, 17, 16, 16, 16, 16, 16, 16, 16, 15, 15, 15, 15, 15,
+                        15, 20, 19, 18, 17, 16,
+                        15],
         "network_resources_count": [15],
         "learning_resources_count": [0]
     }
 
     strategy = "epsilon_greedy"
-    id = "dynamic-seed2-steps2M"
+    id = "{}-{}-{}".format(c["max_users:0"][0], c["max_users:1"][0], c["learning_resources_count"][0])
     for i in range(0, len(c["use_greedy"])):
         random.seed(2)
         np.random.seed(2)
@@ -340,7 +353,7 @@ def run_experiments():
 
         }
 
-        wandb.init(reinit=True, config=config, project="costoflearning-test")
+        wandb.init(reinit=True, config=config, project="costoflearning-policy-data-gen")
         wandb.run.name = id
         wandb.run.save()
 

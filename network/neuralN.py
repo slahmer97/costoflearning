@@ -27,10 +27,10 @@ class Net(nn.Module):
         return self.out(x)  # action_prob
 
     def save_me(self, name="eval"):
-        torch.save(self.state_dict(), "{}-OutOfBand700.pt".format(name))
+        torch.save(self.state_dict(), "{}-ofb.pt".format(name))
 
     def load_me(self, name="eval"):
-        self.load_state_dict(torch.load("{}-OutOfBand700.pt".format(name)))
+        self.load_state_dict(torch.load("{}-ofb.pt".format(name)))
 
 
 class DQN:
