@@ -9,20 +9,43 @@ class Net(nn.Module):
 
     def __init__(self, **kwargs):
         super(Net, self).__init__()
+        self.batch = kwargs["batch_size"]
+        # self.disc = kwargs["discreet_ctx_count"]
+        self.disc_rep = kwargs["discrete_rep_size"]
+        self.contc = kwargs["continous_ctx_count"]
+        # self.max_embedding_index = kwargs["max_embedding_index"]
+        self.env_state_size = kwargs['state_count']
+        # self.ctx_encoder1 = nn.Embedding(self.max_embedding_index, self.disc_rep, max_norm=True)
 
-        self.fc1 = nn.Linear(kwargs['state_count'], 64)
+        self.ctx_encoder2 = nn.Linear(self.contc + self.disc_rep, 8)
+        self.ctx_encoder2.weight.data.normal_(0, 0.1)
+
+        self.fc1 = nn.Linear(6, 64)
         self.fc1.weight.data.normal_(0, 0.1)
-        self.fc2 = nn.Linear(64, 32)
+
+        self.fc2 = nn.Linear(64 + 8, 96)
         self.fc2.weight.data.normal_(0, 0.1)
-        self.out = nn.Linear(32, kwargs['action_count'])
+
+        self.fc3 = nn.Linear(96, 64)
+        self.fc3.weight.data.normal_(0, 0.1)
+
+        self.out = nn.Linear(64, kwargs['action_count'])
         self.out.weight.data.normal_(0, 0.1)
 
     def forward(self, x):
-        x = self.fc1(x)
-        x = F.relu(x)
+        batch = x.shape[0]
 
-        x = self.fc2(x)
-        x = F.relu(x)
+        slice1 = x[:, :self.contc + self.disc_rep].view(batch, self.contc + self.disc_rep)
+        slice3 = x[:, self.contc + self.disc_rep :].view(batch, 6)
+
+        slice1 = F.relu(self.ctx_encoder2(slice1))
+
+        slice3 = F.relu(self.fc1(slice3))
+        x = torch.cat((slice1, slice3), 1)
+        x = F.relu(self.fc2(x))
+
+        x = F.relu(self.fc3(x))
+
         # action_prob = self.out(x)
         return self.out(x)  # action_prob
 
@@ -42,11 +65,9 @@ class DQN:
 
         self.action_count = kwargs['action_count']
         self.state_count = kwargs['state_count']
-        net_config = {
-            "action_count": self.action_count,
-            "state_count": self.state_count,
-        }
-        self.eval_net, self.target_net = Net(**net_config), Net(**net_config)
+
+        self.state_ctx_count = kwargs['state_count'] + kwargs["continous_ctx_count"] + 1
+        self.eval_net, self.target_net = Net(**kwargs), Net(**kwargs)
 
         self.mem_capacity = kwargs['mem_capacity']
         self.learning_rate = kwargs['learning_rate']
@@ -68,7 +89,7 @@ class DQN:
         self.step_eps = 0
 
         self.memory_counter = 0
-        self.memory = np.zeros((self.mem_capacity, self.state_count * 2 + 2))
+        self.memory = np.zeros((self.mem_capacity, self.state_ctx_count * 2 + 2))
         # why the NUM_STATE*2 +2
         # When we store the memory, we put the state, action, reward and next_state in the memory
         # here reward and action is a number, state is a ndarray
@@ -110,7 +131,6 @@ class DQN:
     def choose_action(self, state):
         self.step_eps += 1
 
-        from network.globsim import SimGlobals
         if self.i % 1000 == 0:
             currentStep = int(self.i / 1000)
             self.epsilon = self.start * np.exp(self.slope * currentStep)
@@ -144,24 +164,19 @@ class DQN:
 
     def reset_mem(self):
         self.memory_counter = 0
-        self.memory = np.zeros((self.mem_capacity, self.state_count * 2 + 2))
+        self.memory = np.zeros((self.mem_capacity, self.state_ctx_count * 2 + 2))
 
     def stop(self):
         self.stop_learning = True
 
-    def learn(self):
-
+    def learn(self, memory):
         # update the parameters
         if self.step_eps % self.nn_update == 0:
             self.target_net.load_state_dict(self.eval_net.state_dict())
         self.learn_step_counter += 1
+        batch_state, batch_action, batch_reward, batch_next_state, _ = memory.sample()
         # sample batch from memory
-        sample_index = np.random.choice(min(self.memory_counter, self.mem_capacity), self.batch_size)
-        batch_memory = self.memory[sample_index, :]
-        batch_state = torch.FloatTensor(batch_memory[:, :self.state_count])
-        batch_action = torch.LongTensor(batch_memory[:, self.state_count:self.state_count + 1].astype(int))
-        batch_reward = torch.FloatTensor(batch_memory[:, self.state_count + 1:self.state_count + 2])
-        batch_next_state = torch.FloatTensor(batch_memory[:, -self.state_count:])
+
 
         # q_eval
         q_eval = self.eval_net(batch_state).gather(1, batch_action)
@@ -172,3 +187,5 @@ class DQN:
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+    def meta_learn(self, memory):

@@ -269,8 +269,7 @@ def run(**run_config):
 
     greedySelector = GreedyBalancer(g_eps=run_config["g_eps"], g_eps_decay=run_config["g_eps_decay"],
                                     g_eps_min=run_config["g_eps_min"])
-    dqn.eval_net.load_me("models/eval{}".format(450))
-    dqn.target_net.load_me("models/target{}".format(450))
+
     for i in range(episodes):
 
         accumulated_reward = 0

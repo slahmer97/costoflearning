@@ -91,8 +91,7 @@ def run(**run_config):
 
     greedySelector = GreedyBalancer(g_eps=run_config["g_eps"], g_eps_decay=run_config["g_eps_decay"],
                                     g_eps_min=run_config["g_eps_min"])
-    dqn.eval_net.load_me("models/eval{}".format(600))
-    dqn.target_net.load_me("models/target{}".format(600))
+
     for i in range(episodes):
         if i in [500, 1000, 1500, 2000, 2500, 3000, 3500, 4000]:
 
@@ -300,8 +299,8 @@ def run_experiments():
         "queue_type": ["fifo"],
         # "max_users:0": [15, 28, 25, 7, 20, 15, 19, 18, 15, 36],
         # "max_users:1": [19, 10, 12, 25, 16, 20, 17, 17, 19, 5],
-        "max_users:0": [19, 26, 23, 15],
-        "max_users:1": [19, 14, 16, 20],
+        "max_users:0": [73, 26, 23, 15],
+        "max_users:1": [6, 14, 16, 20],
         #"max_users:0": [15, 26, 23, 15],
         #"max_users:1": [20, 14, 16, 20],
         "network_resources_count": [15],

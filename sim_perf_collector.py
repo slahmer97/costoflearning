@@ -3,7 +3,10 @@ import csv
 
 class PerfCollector:
     def __init__(self, filename="xd"):
-        self.file = open('journal-res/{}.csv'.format(filename), 'w')
+
+        name = 'gap-res/{}.csv'.format(filename)
+        print("results are going to be written to: ", name)
+        self.file = open(name, 'w')
         header = ["step", "slice0:throughputs", "slice1:throughputs", "slice0:drop_rates", "slice1:drop_rates",
                   "slice0:death_rates", "slice1:death_rates", "slice0:queue_sizes", "slice1:queue_sizes",
                   "slice0:urgent_packets", "slice1:urgent_packets", "slice0:latency_per_packet",
