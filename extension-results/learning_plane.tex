@@ -1,0 +1,38 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{darkslategray38}{RGB}{38,38,38}
+\definecolor{lavender234234242}{RGB}{234,234,242}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{steelblue76114176}{RGB}{76,114,176}
+
+\begin{axis}[
+axis background/.style={fill=lavender234234242},
+axis line style={white},
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  draw=lightgray204,
+  fill=lavender234234242
+},
+tick align=outside,
+x grid style={white},
+xmajorgrids,
+xmajorticks=false,
+xmin=-99.95, xmax=2098.95,
+xtick style={color=darkslategray38},
+y grid style={white},
+ymajorgrids,
+ymajorticks=false,
+ymin=-0.0454656, ymax=2.6669056,
+ytick style={color=darkslategray38}
+]
+\addplot [steelblue76114176]
+table {%
+};
+\addlegendentry{this work}
+\end{axis}
+
+\end{tikzpicture}
