@@ -57,7 +57,7 @@ class NetQueue:
         # self.update_dead_packets()
         available_bandwidth = SimGlobals.NET_TIMESLOT_DURATION_S * self.allocated_resources * SimGlobals.BANDWIDTH_PER_RESOURCE
         count = 0
-        while available_bandwidth > 0 and not self.empty():
+        while available_bandwidth > SimGlobals.NET_TIMESLOT_DURATION_S * SimGlobals.BANDWIDTH_PER_RESOURCE and not self.empty():
             count += 1
 
             self.temp_total_served += 1

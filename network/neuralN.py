@@ -27,10 +27,10 @@ class Net(nn.Module):
         return self.out(x)  # action_prob
 
     def save_me(self, name="eval"):
-        torch.save(self.state_dict(), "{}-OutOfBand.pt".format(name))
+        torch.save(self.state_dict(), "{}-ofb.pt".format(name))
 
     def load_me(self, name="eval"):
-        self.load_state_dict(torch.load("{}-OutOfBand.pt".format(name)))
+        self.load_state_dict(torch.load("{}-ofb.pt".format(name)))
 
 
 class DQN:
@@ -83,11 +83,11 @@ class DQN:
 
         self.stop_learning = False
 
+
         self.slope = 1
         self.start = 1.0
 
         self.i = 0
-        self.reset_epsilon()
 
     def epsilon_greedy_strategy(self, state):
         state = torch.unsqueeze(torch.FloatTensor(state), 0)  # get a 1D array
@@ -112,7 +112,7 @@ class DQN:
 
         from network.globsim import SimGlobals
         if self.i % 1000 == 0:
-            currentStep = int(self.i / 1000)
+            currentStep =  int(self.i / 1000)
             self.epsilon = self.start * np.exp(self.slope * currentStep)
             self.epsilon = max(self.epsilon_min, self.epsilon)
 
@@ -135,7 +135,7 @@ class DQN:
         self.memory[index, :] = transition
         self.memory_counter += 1
 
-    def reset_epsilon(self, start=1.0, end=100):
+    def reset_epsilon(self, start=0.3, end=100):
         self.start = start
         self.epsilon = start
         self.slope = np.log(self.epsilon_min / self.start) / end
@@ -155,8 +155,9 @@ class DQN:
         if self.step_eps % self.nn_update == 0:
             self.target_net.load_state_dict(self.eval_net.state_dict())
         self.learn_step_counter += 1
+
         # sample batch from memory
-        sample_index = np.random.choice(min(self.memory_counter, self.mem_capacity), self.batch_size)
+        sample_index = np.random.choice(min(self.mem_capacity, len(self.memory)), self.batch_size)
         batch_memory = self.memory[sample_index, :]
         batch_state = torch.FloatTensor(batch_memory[:, :self.state_count])
         batch_action = torch.LongTensor(batch_memory[:, self.state_count:self.state_count + 1].astype(int))

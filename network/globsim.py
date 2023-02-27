@@ -11,10 +11,20 @@ class SimGlobals:
     EXPERIENCE_SIZE = None  # in bits
     flow_counter = None
 
-    Transitions = [np.array([[0.91989676, 0.08010324],
-                             [0.39707462, 0.60292538]]),
-                   np.array([[0.177407, 0.822593],
-                             [0.90394548, 0.09605452]])]
+    Transitions = [
+        np.array(
+            [
+                [0.5, 0.5],
+                [0.92, 0.08]
+            ]
+        ),
+        np.array(
+            [
+                [0.5, 0.5],
+                [0.5, 0.5]
+            ]
+        )
+    ]
 
     success_prob = 1.0
     # capacity_seq = [0.9878908956925939, 0.9791408975149585, 0.8300037254456502, 0.8973736207129992, 0.9185000230967884,
@@ -47,8 +57,8 @@ class SimGlobals:
             SimGlobals.my_counter += 1
             # learning_queue.stop = True
 
-            dqn.reset_epsilon(1.0, 100)
-            # greedySelector.reset_gepsilon(100)
+            dqn.reset_epsilon(0.015, 4)
+            #greedySelector.reset_gepsilon(80)
             dqn.reset_mem()
             learning_queue.reset()
             print("Updated Greedy Selection")
