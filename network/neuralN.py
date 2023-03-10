@@ -157,7 +157,7 @@ class DQN:
         self.learn_step_counter += 1
 
         # sample batch from memory
-        sample_index = np.random.choice(min(self.mem_capacity, len(self.memory)), self.batch_size)
+        sample_index = np.random.choice(min(self.memory_counter, self.mem_capacity), self.batch_size)
         batch_memory = self.memory[sample_index, :]
         batch_state = torch.FloatTensor(batch_memory[:, :self.state_count])
         batch_action = torch.LongTensor(batch_memory[:, self.state_count:self.state_count + 1].astype(int))

@@ -71,12 +71,12 @@ class MetaNetwork(gym.Env):
         r1, r2 = self.get_expected_rates()  # packets per second
         total_number_of_packets = self._sim.TOTAL_LINK_BANDWIDTH / self.packet_size
         self.total_number_of_packets_per_slot = total_number_of_packets * self._sim.NET_TIMESLOT_DURATION_S
-        print("[+] Total available bandwidth: {} b/s -- {} b/slot".format(total_number_of_packets * 512,
-                                                                          self.total_number_of_packets_per_slot * 512))
-        print("[+] Expected number of packets:\n"
-              "\t slice1 : {} byte/sec -- {} byte/slot\n"
-              "\t slice2 : {} byte/sec -- {} byte/slot\n".format(r1, r1 * self._sim.NET_TIMESLOT_DURATION_S,
-                                                                 r2, r2 * self._sim.NET_TIMESLOT_DURATION_S))
+        #print("[+] Total available bandwidth: {} b/s -- {} b/slot".format(total_number_of_packets * 512,
+        #                                                                  self.total_number_of_packets_per_slot * 512))
+        #print("[+] Expected number of packets:\n"
+        #      "\t slice1 : {} byte/sec -- {} byte/slot\n"
+        #      "\t slice2 : {} byte/sec -- {} byte/slot\n".format(r1, r1 * self._sim.NET_TIMESLOT_DURATION_S,
+        #                                                         r2, r2 * self._sim.NET_TIMESLOT_DURATION_S))
 
     def init_resources(self):
         res = 10
@@ -158,8 +158,8 @@ class MetaNetwork(gym.Env):
         self.state.append(self.slices[0].allocated_resources)
         self.state.append(self.slices[1].allocated_resources)
 
-        interrupt0, interrupt_count0 = self.slices[0].can_interrupt_next()
-        interrupt1, interrupt_count1 = self.slices[1].can_interrupt_next()
+        #interrupt0, up0, sp0 = self.slices[0].can_interrupt_next()
+        up1, sp1 = self.slices[1].can_interrupt_next()
 
         info = {
             "resources": [self.state[4], self.state[5]],
@@ -168,7 +168,7 @@ class MetaNetwork(gym.Env):
             "incoming_traffic": [stats[0], stats[1]],
             "packet_drop": [s[0][1], s[1][1]],
             "packet_dead": [s[0][3], s[1][3]],
-            "packet_urgent": [interrupt_count0, interrupt_count1],
+            "packet_urgent": [up1, sp1],
             "packet_resent": [s[0][9], s[1][9]],
             "packet_served": [served_packets[0], served_packets[1]],
             "packet_latency": [s[0][8], s[1][8]],

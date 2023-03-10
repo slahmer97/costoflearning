@@ -2,7 +2,7 @@ import numpy as np
 
 
 class Packet:
-    def __init__(self,sim, flow_id, required_delay, max_delay, size=1500):
+    def __init__(self, sim, flow_id, required_delay, max_delay, size=1500):
         self.flow_id = flow_id
         self.sim = sim
         self.generated_at = None
@@ -22,32 +22,47 @@ class Packet:
 
         if self.max_delay == np.infty:
             if self.sim.NET_TIMESLOT_STEP < self.generated_at + req_delay_max_slot:
-                return "soft", np.infty
+                return "soft", np.infty, np.infty
             else:
-                return "hard", np.infty
+                return "hard", np.infty, np.infty
         else:
             max_delay_max_slot = int(self.max_delay / self.sim.NET_TIMESLOT_DURATION_S)
 
         assert req_delay_max_slot >= 1
         assert max_delay_max_slot >= 1
 
-        #assert SimGlobals.NET_TIMESLOT_STEP <= self.generated_at + req_delay_max_slot
+        # assert SimGlobals.NET_TIMESLOT_STEP <= self.generated_at + req_delay_max_slot
         assert self.sim.NET_TIMESLOT_STEP <= self.generated_at + max_delay_max_slot
-
+        max_delay_max_slot = int(self.max_delay / self.sim.NET_TIMESLOT_DURATION_S)
+        assert req_delay_max_slot <= max_delay_max_slot
         # deadline already passed
-        if self.sim.NET_TIMESLOT_STEP >= self.generated_at + max_delay_max_slot:
+        if self.sim.NET_TIMESLOT_STEP > self.generated_at + max_delay_max_slot:
+            print("dead", - abs(self.sim.NET_TIMESLOT_STEP - self.generated_at - max_delay_max_slot))
             return "dead", - abs(self.sim.NET_TIMESLOT_STEP - self.generated_at - max_delay_max_slot)
 
         # soft deadline 1 duration is still less than the requested one
-        if self.sim.NET_TIMESLOT_STEP < self.generated_at + req_delay_max_slot:
-            return "soft", abs(self.sim.NET_TIMESLOT_STEP - self.generated_at - max_delay_max_slot)
+        max_on = self.generated_at + max_delay_max_slot
+        req_on = self.generated_at + req_delay_max_slot
+        assert self.sim.NET_TIMESLOT_STEP <= max_on
+        soft_life = self.sim.NET_TIMESLOT_STEP - self.generated_at - req_delay_max_slot
+        hard_life = abs(self.sim.NET_TIMESLOT_STEP - self.generated_at - max_delay_max_slot)
 
-        # time is between req and max
-        if self.max_delay != self.required_delay:
-            return "hard", abs(self.sim.NET_TIMESLOT_STEP - self.generated_at - req_delay_max_slot)
-        else:
-            i = self.sim.NET_TIMESLOT_STEP
-            print("unknozn")
+        if self.sim.NET_TIMESLOT_STEP == max_on or self.sim.NET_TIMESLOT_STEP + 1 == max_on:
+            assert soft_life == hard_life or soft_life > 0
+            return "hard", hard_life, soft_life
+        if req_on < self.sim.NET_TIMESLOT_STEP < max_on - 1:
+            #print(soft_life)
+            assert soft_life > 0
+            return "soft", hard_life, soft_life
+        #if soft_life == -49 and hard_life == 69:
+
+        #    print(soft_life, hard_life)
+        assert soft_life <= 0
+        return "good", 0, 0
+
+
+
+
     def is_dead(self):
         if self.max_delay == np.Inf:
             return False

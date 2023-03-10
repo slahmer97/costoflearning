@@ -57,8 +57,8 @@ class SimGlobals:
             SimGlobals.my_counter += 1
             # learning_queue.stop = True
 
-            dqn.reset_epsilon(0.015, 4)
-            #greedySelector.reset_gepsilon(80)
+            dqn.reset_epsilon(1.0, 100)
+            greedySelector.reset_gepsilon(100)
             dqn.reset_mem()
             learning_queue.reset()
             print("Updated Greedy Selection")

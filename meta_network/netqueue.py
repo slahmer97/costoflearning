@@ -1,5 +1,4 @@
 from collections import deque
-
 from meta_network.packet import Packet
 
 
@@ -56,7 +55,7 @@ class NetQueue:
         # self.update_dead_packets()
         available_bandwidth = self.sim.NET_TIMESLOT_DURATION_S * self.allocated_resources * self.sim.BANDWIDTH_PER_RESOURCE
         count = 0
-        while available_bandwidth > 0 and not self.empty():
+        while available_bandwidth > self.sim.NET_TIMESLOT_DURATION_S * self.sim.BANDWIDTH_PER_RESOURCE and not self.empty():
             count += 1
 
             self.temp_total_served += 1
@@ -76,7 +75,7 @@ class NetQueue:
             else:
                 self.avg_latency += current_latency
                 val = self.sim.urllc_cost(current_latency)
-                #if self.type == 1:
+                # if self.type == 1:
                 #    print("\tlatency: {} -- val: {} -- total: {} -- resent: {}".format(current_latency, val, self.temp_total_served, self.temp_resent))
                 self.cum_cost += val
 
@@ -111,9 +110,9 @@ class NetQueue:
 
     def reset_temp_stats(self):
 
-       # self.stats.append(
-       #     (SimGlobals.NET_TIMESLOT_STEP, self.temp_total_enqueued, self.temp_total_served, self.temp_total_dropped,
-       #      len(self.queue)))
+        # self.stats.append(
+        #     (SimGlobals.NET_TIMESLOT_STEP, self.temp_total_enqueued, self.temp_total_served, self.temp_total_dropped,
+        #      len(self.queue)))
 
         self.temp_total_enqueued = 0
         self.temp_total_served = 0
@@ -157,21 +156,24 @@ class NetQueue:
             del (self.queue[i])
 
     def can_interrupt_next(self):
-        interrupt = True
-        non_feasible_packets = 0
-
+        up = 0
+        sp = 0
         for i in range(len(self.queue)):
-            packet_state, state_value = self.queue[i].get_packet_state()
-            if (packet_state == "soft" or packet_state == "hard") and state_value <= 1:
-                interrupt = True
-                non_feasible_packets += 1
+            packet_state, hard_life_counter, soft_life_counter = self.queue[i].get_packet_state()
+            if packet_state == "good":
+                continue
+            if packet_state == "hard":
+                up += 1
+            if packet_state == "soft":
+                sp += 1
 
-        return interrupt, non_feasible_packets
+        return up, sp
 
 
 class ExperienceQueue:
-    def __init__(self, init=0, queue_type="fifo"):
+    def __init__(self, sim, init=0, queue_type="fifo"):
         self.max_size = 1500
+        self._sim = sim
         self.queue_type = queue_type
 
         if queue_type == "fifo":
@@ -190,6 +192,7 @@ class ExperienceQueue:
             self.allocated_resources, self.queue_type, self.max_size))
 
         self.stop = False
+
     def push(self, sample):
 
         if self.queue_type == "fifo":
@@ -199,6 +202,7 @@ class ExperienceQueue:
         elif self.queue_type == "lifo":
             if len(self.lifo) == self.max_size:
                 self.dropped += 1
+
             self.lifo.append(sample)
         else:
             raise Exception("unknown queue type")
@@ -236,17 +240,17 @@ class ExperienceQueue:
         if len(self) < 1:
             return samples
 
-        available_bandwidth = self.sim.NET_TIMESLOT_DURATION_S * (
-                self.allocated_resources + additional_resources) * self.sim.BANDWIDTH_PER_RESOURCE
+        available_bandwidth = self._sim.NET_TIMESLOT_DURATION_S * (
+                self.allocated_resources + additional_resources) * self._sim.BANDWIDTH_PER_RESOURCE
 
         self.total_available_so_far += available_bandwidth
 
         # print('Available bandwidth is: {}'.format(self.total_available_so_far))
 
-        while self.total_available_so_far >= self.sim.EXPERIENCE_SIZE and len(self) > 0:
-            self.total_available_so_far -= self.sim.EXPERIENCE_SIZE
+        while self.total_available_so_far >= self._sim.EXPERIENCE_SIZE and len(self) > 0:
+            self.total_available_so_far -= self._sim.EXPERIENCE_SIZE
 
-            if self.sim.send_success():
+            if self._sim.send_success():
                 sample = self.get()  # self.queue.popleft()
                 samples.append(sample)
 

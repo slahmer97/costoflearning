@@ -36,7 +36,7 @@ class Net(nn.Module):
         batch = x.shape[0]
 
         slice1 = x[:, :self.contc + self.disc_rep].view(batch, self.contc + self.disc_rep)
-        slice3 = x[:, self.contc + self.disc_rep :].view(batch, 6)
+        slice3 = x[:, self.contc + self.disc_rep:].view(batch, 6)
 
         slice1 = F.relu(self.ctx_encoder2(slice1))
 
@@ -50,10 +50,10 @@ class Net(nn.Module):
         return self.out(x)  # action_prob
 
     def save_me(self, name="eval"):
-        torch.save(self.state_dict(), "{}-OutOfBand.pt".format(name))
+        torch.save(self.state_dict(), "{}-model.pt".format(name))
 
     def load_me(self, name="eval"):
-        self.load_state_dict(torch.load("{}-OutOfBand.pt".format(name)))
+        self.load_state_dict(torch.load("{}-model.pt".format(name)))
 
 
 class DQN:
@@ -71,6 +71,7 @@ class DQN:
 
         self.mem_capacity = kwargs['mem_capacity']
         self.learning_rate = kwargs['learning_rate']
+        self.learning_rate2 = kwargs['learning_rate2']
 
         self.gamma = kwargs['gamma']
 
@@ -95,6 +96,8 @@ class DQN:
         # here reward and action is a number, state is a ndarray
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=self.learning_rate, eps=0.01,
                                           weight_decay=0.0001)
+        self.optimizer2 = torch.optim.Adam(self.eval_net.parameters(), lr=self.learning_rate2, eps=0.01,
+                                           weight_decay=0.0001)
         self.loss_func = nn.MSELoss()
 
         self.greed_actions = 0
@@ -172,20 +175,34 @@ class DQN:
     def learn(self, memory):
         # update the parameters
         if self.step_eps % self.nn_update == 0:
+            #print("target")
             self.target_net.load_state_dict(self.eval_net.state_dict())
         self.learn_step_counter += 1
-        batch_state, batch_action, batch_reward, batch_next_state, _ = memory.sample()
+        batch_state, batch_action, batch_reward, batch_next_state = memory.sample()
         # sample batch from memory
-
 
         # q_eval
         q_eval = self.eval_net(batch_state).gather(1, batch_action)
         q_next = self.target_net(batch_next_state).detach()
         q_target = batch_reward + self.gamma * q_next.max(1)[0].view(self.batch_size, 1)
         loss = self.loss_func(q_eval, q_target)
-
+        value = loss.item()
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+        return value
 
-    def meta_learn(self, memory):
+    def meta_learn(self, memory, zero=True):
+        batch_state, batch_action, batch_reward, batch_next_state, _ = memory.sample()
+
+        q_eval = self.eval_net(batch_state).gather(1, batch_action)
+        q_next = self.target_net(batch_next_state).detach()
+        q_target = batch_reward + self.gamma * q_next.max(1)[0].view(self.batch_size, 1)
+        loss = self.loss_func(q_eval, q_target)
+
+        if zero:
+            self.optimizer.zero_grad()
+        value = loss.item()
+        loss.backward()
+
+        return value
