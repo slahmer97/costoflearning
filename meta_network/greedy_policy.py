@@ -42,7 +42,7 @@ class PolicySelector:
         self.non_greedy = 0
         self.slope = - 0.0000018
 
-    def reset_gepsilon(self, start, end=60):
+    def reset_gepsilon(self, start=0.2, end=60):
         self.slope = np.log(self.g_eps_min / start) / end
         self.i = 0
         self.step = 0
@@ -57,7 +57,7 @@ class PolicySelector:
 
         self.step += 1
 
-        #if self.step % 10 == 0:
+        #if self.step % 100 == 0:
         #    return 2
         #return 1
 

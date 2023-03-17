@@ -1,8 +1,10 @@
 import random
 import torch
 import copy
+
+from meta_network.greedy_policy import OnlyLearningPlanePolicy, GreedyPolicy, PolicySelector
 from meta_network.mcrl import DQN
-from meta_network.replay_buffer import ReplayBuffer
+from meta_network.replay_buffer import ReplayBuffer, ReplayBuffer0
 from meta_network.tasks import Tasks
 from meta_network.utils import context_to_id, sample_tasks
 from simulation import Simulation
@@ -40,7 +42,7 @@ def single_task():
     dqn = DQN(**dqn_config)
     task = task_sampler.get_task(0)
     env = Simulation(**task)
-    buffer = ReplayBuffer(env_obs_size=3 + 8 + 6, capacity=100000,
+    buffer = ReplayBuffer(env_obs_size=3 + 8 + 6, capacity=10000,
                           batch_size=dqn_config["batch_size"], device=device)
     for episode in range(episodes):
         cum_reward = 0
@@ -70,8 +72,8 @@ def meta_learn():
         "epsilon_min": 0.01,
         "nn_update": 50,
         "batch_size": 128,
-        "learning_rate": 0.00001,
-        "learning_rate2": 0.000001,
+        "learning_rate": 0.0001,
+        "learning_rate2": 0.001,
         "gamma": 0.95,
         "action_count": 3,
         "state_count": 6,
@@ -81,15 +83,26 @@ def meta_learn():
         # "max_embedding_index": len(mapper)
 
     }
+    greedy_policy = GreedyPolicy()
+    ps_config = {
+        "g_eps": 0.2,
+        "g_eps_decay": 0,
+        "g_eps_min": 0.002,
+        "use": False,
+        "end": 80
+    }
+    policy_selector = PolicySelector(g_eps=ps_config["g_eps"], g_eps_decay=ps_config["g_eps_decay"],
+                                     g_eps_min=ps_config["g_eps_min"], use=ps_config["use"])
+    policy_selector.reset_gepsilon(ps_config["g_eps"], ps_config["end"])
 
     iterations = 10000
-    rollout_k = 1000
+    rollout_k = 1
     device = torch.device("cpu")
     dqn = DQN(**dqn_config)
 
     learning_iterations = 1
-    glob_rewards = deque(maxlen=100)
-    task_rewards = deque(maxlen=100)
+    glob_rewards = deque(maxlen=50)
+    task_rewards = deque(maxlen=50)
     for iteration in range(iterations):
         tasks = [task_sampler.get_task(0)]
         for task in tasks:
@@ -97,8 +110,8 @@ def meta_learn():
             if task_id not in tasks_state:
                 tasks_state[task_id] = {}
             if "buffer" not in tasks_state[task_id]:
-                tasks_state[task_id]["buffer"] = ReplayBuffer(env_obs_size=3 + 8 + 6, capacity=100000,
-                                                              batch_size=dqn_config["batch_size"], device=device)
+                tasks_state[task_id]["buffer"] = ReplayBuffer0(input_shape=3 + 8 + 6, max_size=10000,
+                                                               batch_size=dqn_config["batch_size"])
 
             if "simulator" not in tasks_state[task_id]:
                 tasks_state[task_id]["simulator"] = Simulation(**task)
@@ -107,26 +120,33 @@ def meta_learn():
             tbuff = tasks_state[task_id]["buffer"]
             tsim = tasks_state[task_id]["simulator"]
             tdqn = tasks_state[task_id]["agent"]
-            ret, rew = tsim.rollout(tdqn, rollout_k)
-            for (si, a, (r, c1, c2), sj, _, _) in ret:
-                tbuff.add(si, a, r, sj)
+            rewall = 0
+            for step in range(1000):
 
-            glob_rewards.append(rew)
-            assert rollout_k>= dqn_config["batch_size"]
+                ret, rew, additional_learning_res = tsim.rollout(dnn_policy=tdqn, k_steps=rollout_k,
+                                                                 greedy_policy=greedy_policy,
+                                                                 policy_selector=policy_selector,
+                                                                 meta_data={"cp": []})
+                for (si, a, (r, c1, c2), sj, _, _) in ret:
+                    tbuff.add(si, a, r, sj)
 
-            value1 = 0
-            for learning_iter in range(learning_iterations):
-                value1 += tdqn.learn(memory=tbuff)
-            value1 /= learning_iterations
+                #assert rollout_k >= dqn_config["batch_size"]
 
-            # ret, rew = tsim.rollout(tdqn, rollout_k)
-            # for (si, a, (r, c1, c2), sj, _, _) in ret:
-            #    tbuff.add(si, a, r, sj)
+                value1 = 0
+                if tbuff.is_sufficient():
+                    value1 += tdqn.learn(memory=tbuff)
+                value1 /= learning_iterations
 
+                # ret, rew = tsim.rollout(tdqn, rollout_k)
+                # for (si, a, (r, c1, c2), sj, _, _) in ret:
+                #    tbuff.add(si, a, r, sj)
+                rewall += rew
+            glob_rewards.append(rewall)
             value2 = tdqn.meta_learn(tbuff, zero=True)
-            task_rewards.append(rew)
+            task_rewards.append(rewall)
 
-        print(f"iter:{iteration} loss1={value1} reward1={np.mean(glob_rewards)} loss2={value2} reward2={np.mean(task_rewards)}")
+        print(
+            f"iter:{iteration} loss1={value1} reward1={np.mean(glob_rewards)} loss2={value2} reward2={np.mean(task_rewards)} buff_size={tbuff.mem_cntr} eps={tdqn.epsilon}")
         # Merge gradients into the global network
         # print("Here")
         dqn.optimizer.zero_grad()

@@ -193,7 +193,7 @@ class DQN:
         return value
 
     def meta_learn(self, memory, zero=True):
-        batch_state, batch_action, batch_reward, batch_next_state, _ = memory.sample()
+        batch_state, batch_action, batch_reward, batch_next_state = memory.sample()
 
         q_eval = self.eval_net(batch_state).gather(1, batch_action)
         q_next = self.target_net(batch_next_state).detach()

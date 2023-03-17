@@ -3,19 +3,20 @@ import pandas
 import pandas as pd
 from matplotlib import pyplot as plt
 
-task_id = "110"
-data = pd.read_csv("task-{}/performance.csv".format(task_id))
-size = len(data)
+task_id = "00"
+data = pd.read_csv("task-{}/latency1.csv".format(task_id))
+size = 2000
 steps = data["Step"].apply(lambda val: val if val <= 100000 else val * 4)
 ofb = pandas.DataFrame(
     {
-        "perfs": data["{}-ofb".format(task_id)].to_numpy().reshape(-1),
+        "latency": np.random.choice(data["{}-ofb".format(task_id)].to_numpy().reshape(-1), size=size),
         "strategy": ["ofb"] * size
     }
 )
+
 dynamic = pandas.DataFrame(
     {
-        "perfs": data["{}-dynamic".format(task_id)].to_numpy().reshape(-1)
+        "latency": np.random.choice(data["{}-dynamic".format(task_id)].to_numpy().reshape(-1), size=size)
         ,
         "strategy": ["dynamic"] * size
     }
@@ -23,19 +24,19 @@ dynamic = pandas.DataFrame(
 
 always1 = pandas.DataFrame(
     {
-        "perfs": data["{}-static-1".format(task_id)].to_numpy().reshape(-1),
+        "latency": np.random.choice(data["{}-static-1".format(task_id)].to_numpy().reshape(-1), size=size),
         "strategy": ["static-1"] * size
     }
 )
 every10 = pandas.DataFrame(
     {
-        "perfs": data["{}-every-10".format(task_id)].to_numpy().reshape(-1),
+        "latency": np.random.choice(data["{}-every-10".format(task_id)].to_numpy().reshape(-1), size=size),
         "strategy": ["every-10ms"] * size
     }
 )
 every100 = pandas.DataFrame(
     {
-        "perfs": data["{}-every-100".format(task_id)].to_numpy().reshape(-1),
+        "latency": np.random.choice(data["{}-every-100".format(task_id)].to_numpy().reshape(-1), size=size),
         "strategy": ["every-100ms"] * size
     }
 )
@@ -46,11 +47,18 @@ every100 = pandas.DataFrame(
 #    "every-10ms": every10,
 #    "every-100ms": every100
 # })
+
+ofb = ofb[~ofb['latency'].isna()]
+dynamic = dynamic[~dynamic['latency'].isna()]
+always1 = always1[~always1['latency'].isna()]
+every10 = every10[~every10['latency'].isna()]
+every100 = every100[~every100['latency'].isna()]
+
 data = pd.concat([ofb, dynamic, always1, every10, every100])
 
 
 #data = np.swapaxes(data, 0, 1)
-print(data.head(100))
+print(data.tail(1000))
 # plt.plot(steps, ofb, label="ofb")
 # plt.plot(steps, dynamic, label="dynamic")
 # plt.plot(steps, every100, label="every100")
@@ -69,14 +77,20 @@ colors = ['#78C850', '#F08030', '#6890F0', '#F8D030', '#F85888', '#705898', '#98
 #                 meanprops={"marker": "o", "markerfacecolor": "white", "markeredgecolor": "black"},
 #                 notch=True, width=0.2, boxprops=dict(alpha=1.0))
 
-ax = sns.barplot(data=data, x="strategy", y="perfs", ci=99.999, palette=colors, dodge=False)
+ax = sns.ecdfplot(data=ofb, x="latency", label="ofb")
+ax = sns.ecdfplot(data=dynamic, x="latency", label="dynamic")
+ax = sns.ecdfplot(data=always1, x="latency", label="static-1")
+ax = sns.ecdfplot(data=every10, x="latency", label="every-10ms")
+ax = sns.ecdfplot(data=every100, x="latency", label="every-100ms")
+
+#ax = sns.barplot(data=data, x="strategy", y="perfs", ci=99.999, palette=colors, dodge=False)
 
 # Set the labels and title
-ax.set(ylabel='$\Phi$')
-ax.set(xlabel=None)
+#ax.set(ylabel='$\Phi$')
+#ax.set(xlabel=None)
 #ax.legend(["1", "2", "3", "4", "5"])
-sns.despine(trim=True)
+#sns.despine(trim=True)
 import tikzplotlib
-
-tikzplotlib.save("perf-task{}.tex".format(task_id))
+plt.legend()
+tikzplotlib.save("latency-task{}.tex".format(task_id))
 plt.show()
