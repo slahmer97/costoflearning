@@ -1,1 +1,0 @@
-step,slice0:throughputs,slice1:throughputs,slice0:drop_rates,slice1:drop_rates,slice0:death_rates,slice1:death_rates,slice0:queue_sizes,slice1:queue_sizes,slice0:urgent_packets,slice1:urgent_packets,slice0:latency_per_packet,slice1:latency_per_packet,slice0:resent,slice1:resent,link_capacity,learner:throughputs,learner:queue_sizes,learner:rho,learner:epsilon
