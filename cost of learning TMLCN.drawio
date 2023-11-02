@@ -1,17 +1,17 @@
-<mxfile host="app.diagrams.net" modified="2023-11-02T07:49:03.526Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 OPR/104.0.0.0" etag="1wR50kciAbD9usytFcwe" version="22.0.0" type="github">
+<mxfile host="app.diagrams.net" modified="2023-11-02T08:34:41.451Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 OPR/104.0.0.0" etag="XDMJuEp2zRYhCvs3khsU" version="22.0.0" type="github">
   <diagram name="Page-1" id="48yRJna23telFu0YNoEB">
-    <mxGraphModel dx="1380" dy="789" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="1" shadow="0">
+    <mxGraphModel dx="789" dy="451" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="1" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="Teats__p5hXg-xirP8DH-14" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
-          <mxGeometry x="110" y="95" width="660" height="425" as="geometry" />
+        <mxCell id="Teats__p5hXg-xirP8DH-14" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#6c8ebf;arcSize=17;gradientColor=none;" vertex="1" parent="1">
+          <mxGeometry x="110" y="95" width="520" height="425" as="geometry" />
         </mxCell>
         <mxCell id="Teats__p5hXg-xirP8DH-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-1" target="Teats__p5hXg-xirP8DH-2">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="Teats__p5hXg-xirP8DH-1" value="incoming packets" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
-          <mxGeometry x="120" y="240" width="80" height="40" as="geometry" />
+        <mxCell id="Teats__p5hXg-xirP8DH-1" value="incoming packets" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#add8e6;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="120" y="190" width="80" height="40" as="geometry" />
         </mxCell>
         <mxCell id="Teats__p5hXg-xirP8DH-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-2" target="Teats__p5hXg-xirP8DH-4">
           <mxGeometry relative="1" as="geometry" />
@@ -19,53 +19,148 @@
         <mxCell id="Teats__p5hXg-xirP8DH-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-2" target="Teats__p5hXg-xirP8DH-3">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="Teats__p5hXg-xirP8DH-2" value="Packet Classifier" style="rounded=1;whiteSpace=wrap;html=1;rotation=90;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
-          <mxGeometry x="190" y="240" width="120" height="40" as="geometry" />
+        <mxCell id="Teats__p5hXg-xirP8DH-2" value="Packet Classifier" style="rounded=1;whiteSpace=wrap;html=1;rotation=90;fillColor=#ffc0cb;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="190" y="190" width="120" height="40" as="geometry" />
         </mxCell>
-        <mxCell id="Teats__p5hXg-xirP8DH-3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e3c800;fontColor=#000000;strokeColor=#B09500;" vertex="1" parent="1">
-          <mxGeometry x="400" y="160" width="120" height="30" as="geometry" />
+        <mxCell id="Teats__p5hXg-xirP8DH-3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#98fb98;strokeColor=default;" vertex="1" parent="1">
+          <mxGeometry x="330" y="120" width="120" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="Teats__p5hXg-xirP8DH-4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f0a30a;fontColor=#000000;strokeColor=#BD7000;" vertex="1" parent="1">
-          <mxGeometry x="400" y="245" width="120" height="30" as="geometry" />
+        <mxCell id="Teats__p5hXg-xirP8DH-4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffdab9;strokeColor=default;" vertex="1" parent="1">
+          <mxGeometry x="330" y="195" width="120" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="Teats__p5hXg-xirP8DH-5" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fa6800;fontColor=#000000;strokeColor=#C73500;" vertex="1" parent="1">
-          <mxGeometry x="400" y="330" width="120" height="30" as="geometry" />
+        <mxCell id="Teats__p5hXg-xirP8DH-5" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dda0dd;strokeColor=default;fontColor=#ffffff;" vertex="1" parent="1">
+          <mxGeometry x="330" y="260" width="120" height="30" as="geometry" />
         </mxCell>
         <mxCell id="Teats__p5hXg-xirP8DH-11" value="\(q_{0}\)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="1530" y="370" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="Teats__p5hXg-xirP8DH-12" value="\(q_{1}\)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="430" y="210" width="60" height="30" as="geometry" />
+          <mxGeometry x="290" y="165" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="Teats__p5hXg-xirP8DH-16" value="\(q_{0}\)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="431" y="125" width="60" height="30" as="geometry" />
+          <mxGeometry x="290" y="95" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="Teats__p5hXg-xirP8DH-17" value="\(q_{L}\)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="432" y="298" width="60" height="30" as="geometry" />
+          <mxGeometry x="290" y="230" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="Teats__p5hXg-xirP8DH-18" value="" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="425" y="470" width="78" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="Teats__p5hXg-xirP8DH-20" value="" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="440" y="390" width="63" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="Teats__p5hXg-xirP8DH-25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;strokeColor=default;endArrow=none;endFill=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-4" target="Teats__p5hXg-xirP8DH-4">
+        <mxCell id="Teats__p5hXg-xirP8DH-40" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-18" target="Teats__p5hXg-xirP8DH-20">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="Teats__p5hXg-xirP8DH-29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-5" target="Teats__p5hXg-xirP8DH-5">
+        <mxCell id="Teats__p5hXg-xirP8DH-43" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-18" target="Teats__p5hXg-xirP8DH-41">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="Teats__p5hXg-xirP8DH-30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-5" target="Teats__p5hXg-xirP8DH-5">
+        <mxCell id="Teats__p5hXg-xirP8DH-18" value="\(\pi_{H}\)" style="rounded=1;whiteSpace=wrap;html=1;rotation=90;fillColor=#f0e68c;" vertex="1" parent="1">
+          <mxGeometry x="260" y="380" width="78" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-66" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-20" target="Teats__p5hXg-xirP8DH-5">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="Teats__p5hXg-xirP8DH-31" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-3" target="Teats__p5hXg-xirP8DH-3">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="Teats__p5hXg-xirP8DH-20" value="\(\pi\)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0e68c;" vertex="1" parent="1">
+          <mxGeometry x="408.5" y="330" width="63" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="Teats__p5hXg-xirP8DH-32" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-3" target="Teats__p5hXg-xirP8DH-3">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="Teats__p5hXg-xirP8DH-25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;strokeColor=default;endArrow=none;endFill=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="436" y="195" as="sourcePoint" />
+            <mxPoint x="436" y="225" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
-        <mxCell id="Teats__p5hXg-xirP8DH-33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-4" target="Teats__p5hXg-xirP8DH-4">
-          <mxGeometry relative="1" as="geometry" />
+        <mxCell id="Teats__p5hXg-xirP8DH-29" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="435" y="260" as="sourcePoint" />
+            <mxPoint x="435" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-30" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="421" y="260" as="sourcePoint" />
+            <mxPoint x="421" y="290" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-31" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="419" y="120" as="sourcePoint" />
+            <mxPoint x="419" y="150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-32" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="434" y="120" as="sourcePoint" />
+            <mxPoint x="434" y="150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;endArrow=none;endFill=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="422" y="195" as="sourcePoint" />
+            <mxPoint x="422" y="225" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-36" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="130" width="40" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-41" value="\pi{}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0e68c;" vertex="1" parent="1">
+          <mxGeometry x="408.5" y="420" width="63" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-42" value="\(\rho(t)\)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="343" y="331" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-45" value="\(1- \rho(t)\)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="347" y="451" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-50" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="130" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-52" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="140" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-53" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="150" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-54" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="160" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-55" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="170" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-56" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="180" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-57" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="190" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-58" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="200" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-59" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="210" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-60" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="220" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-61" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="230" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-62" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="240" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-63" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="250" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-64" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="260" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-65" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="270" width="40" height="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-68" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.769;entryY=0.624;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="Teats__p5hXg-xirP8DH-14">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="472.5" y="360" as="sourcePoint" />
+            <mxPoint x="491.1199999999999" y="360.19999999999993" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Teats__p5hXg-xirP8DH-69" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.769;entryY=0.835;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-41" target="Teats__p5hXg-xirP8DH-14">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
