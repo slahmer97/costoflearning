@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-12-11T09:32:22.423Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0" etag="_qX0xjuKD7Ju-6pjrRVy" version="22.1.7" type="github">
+<mxfile host="app.diagrams.net" modified="2023-12-11T09:48:57.138Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0" etag="7WgOthYj5sL1t2ra3cqQ" version="22.1.7" type="github">
   <diagram id="6a731a19-8d31-9384-78a2-239565b7b9f0" name="Page-1">
     <mxGraphModel dx="2074" dy="1075" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="none" math="0" shadow="0">
       <root>
@@ -10,7 +10,7 @@
         <mxCell id="4" value="Subst. with previous" style="shape=mxgraph.flowchart.data;strokeWidth=2;gradientColor=none;gradientDirection=north;fontStyle=0;html=1;" parent="1" vertex="1">
           <mxGeometry x="101" y="288" width="159" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="5" value="Estimate Stats" style="shape=mxgraph.flowchart.data;strokeWidth=2;gradientColor=none;gradientDirection=north;fontStyle=0;html=1;" parent="1" vertex="1">
+        <mxCell id="5" value="&lt;div&gt;Environment &lt;br&gt;&lt;/div&gt;&lt;div&gt;statistics estimation&lt;br&gt;&lt;/div&gt;" style="shape=mxgraph.flowchart.data;strokeWidth=2;gradientColor=none;gradientDirection=north;fontStyle=0;html=1;" parent="1" vertex="1">
           <mxGeometry x="240" y="150" width="159" height="80" as="geometry" />
         </mxCell>
         <mxCell id="6" value="&lt;div&gt;Similar to &lt;br&gt;&lt;/div&gt;&lt;div&gt;Current&lt;br&gt;&lt;/div&gt;" style="shape=mxgraph.flowchart.decision;strokeWidth=2;gradientColor=none;gradientDirection=north;fontStyle=0;html=1;" parent="1" vertex="1">
@@ -61,13 +61,13 @@
         <mxCell id="jGgedQgBhROpa46BYDDU-70" value="yes" style="text;fontStyle=0;html=1;strokeColor=none;gradientColor=none;fillColor=none;strokeWidth=2;" vertex="1" parent="1">
           <mxGeometry x="220" y="410" width="40" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="jGgedQgBhROpa46BYDDU-71" value="&lt;div&gt;Subs. with the nearest&lt;/div&gt;&lt;div&gt;from past&lt;br&gt;&lt;/div&gt;" style="shape=mxgraph.flowchart.data;strokeWidth=2;gradientColor=none;gradientDirection=north;fontStyle=0;html=1;" vertex="1" parent="1">
+        <mxCell id="jGgedQgBhROpa46BYDDU-71" value="&lt;div&gt;Subst. with the nearest&lt;/div&gt;&lt;div&gt;from past&lt;br&gt;&lt;/div&gt;" style="shape=mxgraph.flowchart.data;strokeWidth=2;gradientColor=none;gradientDirection=north;fontStyle=0;html=1;" vertex="1" parent="1">
           <mxGeometry x="244.5" y="530" width="159" height="80" as="geometry" />
         </mxCell>
         <mxCell id="jGgedQgBhROpa46BYDDU-73" value="no" style="text;fontStyle=0;html=1;strokeColor=none;gradientColor=none;fillColor=none;strokeWidth=2;align=center;" vertex="1" parent="1">
           <mxGeometry x="333" y="480" width="40" height="26" as="geometry" />
         </mxCell>
-        <mxCell id="jGgedQgBhROpa46BYDDU-74" value="Fine-tune" style="shape=mxgraph.flowchart.data;strokeWidth=2;gradientColor=none;gradientDirection=north;fontStyle=0;html=1;" vertex="1" parent="1">
+        <mxCell id="jGgedQgBhROpa46BYDDU-74" value="&lt;div&gt;Re-training/&lt;br&gt;&lt;/div&gt;&lt;div&gt;Fine-tune&lt;/div&gt;" style="shape=mxgraph.flowchart.data;strokeWidth=2;gradientColor=none;gradientDirection=north;fontStyle=0;html=1;" vertex="1" parent="1">
           <mxGeometry x="244.5" y="670" width="159" height="80" as="geometry" />
         </mxCell>
         <mxCell id="jGgedQgBhROpa46BYDDU-75" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="jGgedQgBhROpa46BYDDU-71" target="jGgedQgBhROpa46BYDDU-74">
