@@ -1,21 +1,21 @@
 import random
 import torch
 
-from meta_network.greedy_policy import GreedyPolicy, PolicySelector, OnlyLearningPlanePolicy
-from meta_network.mcrl import DQN
-from meta_network.netqueue import ExperienceQueue
-from meta_network.replay_buffer import ReplayBuffer, ReplayBuffer0
-from meta_network.tasks import Tasks
-from meta_network.utils import context_to_id  # sample_tasks
-from sim_perf_collector import PerfCollector
-from simulation import Simulation
+from src.meta_network.greedy_policy import GreedyPolicy, PolicySelector, OnlyLearningPlanePolicy
+from src.meta_network.mcrl import DQN
+from src.meta_network import ExperienceQueue
+from src.meta_network import ReplayBuffer0
+from src.meta_network import Tasks
+from src.meta_network import context_to_id  # sample_tasks
+from src.simulation import Simulation
 import numpy as np
-import wandb
+#import wandb
 
 
 # keep the average queue size for each queue, and use it as a heuristic to allocate the remaining blocks
 def single_task():
     task_sampler = Tasks()
+
     device = torch.device("cpu")
     episodes = 200
     steps_per_episode = 1000
@@ -95,9 +95,9 @@ def single_task():
         "learning_queue_config": learning_queue_config
 
     }
-    wandb.init(reinit=False, config=simulation_config, project="non-stationary-CoL")
-    wandb.run.name = task_id
-    wandb.run.save()
+    #wandb.init(reinit=False, config=simulation_config, project="non-stationary-CoL")
+    #wandb.run.name = task_id
+    #wandb.run.save()
     dqn.eval_net.load_me("./ex-model/task{}-episode{}".format(idd, 60))
     dqn.target_net.load_me("./ex-model/task{}-episode{}".format(idd, 60))
     for episode in range(episodes):
@@ -133,28 +133,6 @@ def single_task():
                 # avg_active1.append(info["active_users"][1])
                 # avg_resource0.append(info["resources"][0])
                 # avg_resource1.append(info["resources"][1])
-                wandb.log(
-                    {
-                        # "reward": (cum_reward + 250.0) / 250.0,
-                        # "epsilon": dqn.epsilon,
-                        # "forwarded_data": forwarded_data,
-                        "loss": loss,
-
-                        "drop-0": info["packet_drop"][0],
-                        "dead-1": info["packet_dead"][1],
-
-                        "latency-0": info["packet_latency"][0],
-                        "latency-1": info["packet_latency"][1],
-                        "active-0": info["active_users"][0],
-                        "active-1": info["active_users"][1],
-                        "queue-0": info["queue_size"][0],
-                        "queue-1": info["queue_size"][1],
-                        "resources-0": info["resources"][0],
-                        "resources-1": info["resources"][1],
-
-                    },
-                    step=current_step
-                )
 
             samples_tobe_forwarded = learning_queue.step(additional_resources=additional_learning_res)
             for (si, a, r, sj) in samples_tobe_forwarded:
@@ -166,23 +144,7 @@ def single_task():
                 loss += dqn.learn(memory=buffer)
             current_step += 1
 
-        wandb.log(
-            {
-                "reward": (cum_reward + 300.0) / 300.0,
-                "epsilon": dqn.epsilon,
-                "forwarded_data": forwarded_data,
-                "loss": loss,
-                # "latency-1": np.mean(avg_latency1),
-                # "active-0": np.mean(avg_active0),
-                # "active-1": np.mean(avg_active1),
-                # "queue-0": np.mean(avg_queue0),
-                # "queue-1": np.mean(avg_queue1),
-                # "resources-0": np.mean(avg_resource0),
-                # "resources-1": np.mean(avg_resource1),
 
-            },
-            step=current_step
-        )
 
         greedy_count, non_greedy_count, greedy_acc, non_greedy_acc = env.get_greedy_info()
         env.reset_greedy_counters()
@@ -191,7 +153,6 @@ def single_task():
         print(
             f"step={episode + 1}k reward={(cum_reward + 250.0) / 250.0} loss={loss} epsilon={dqn.epsilon} forwarded={forwarded_data}/{buffer.mem_cntr} g-eps={policy_selector.g_eps} greedy={greedy_count}/{greedy_acc} non-reedy={non_greedy_count}/{non_greedy_acc} len(learning)={len(learning_queue)}")
 
-    wandb.finish()
 
 def traffic_profile():
     task_sampler = Tasks()
@@ -234,8 +195,7 @@ def traffic_profile():
     policy_selector.reset_gepsilon(ps_config["g_eps"], ps_config["end"])
 
     current_step = 0
-    wandb.init(reinit=False, project="non-stationary-traffic-shape")
-    wandb.run.save()
+
     for i in range(len(task_sampler.tasks)):
         current_task = task_sampler.get_task(i)
         env = Simulation(**current_task)
@@ -250,16 +210,9 @@ def traffic_profile():
                                                             policy_selector=policy_selector, k_steps=1,
                                                             meta_data={"cp": learning_queue})
             for (si, a, (r, c1, c2), sj, _, info) in ret:
-                wandb.log(
-                    {
-                        "active-0": info["active_users"][0],
-                        "active-1": info["active_users"][1],
-                    },
-                    step=current_step
-                )
+                pass
             current_step += 1
 
-    wandb.finish()
 
 
 if __name__ == "__main__":

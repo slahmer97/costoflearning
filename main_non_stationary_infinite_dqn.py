@@ -4,11 +4,11 @@ import numpy as np
 import torch
 
 from greedy_selector import GreedyBalancer
-from network.netqueue import ExperienceQueue
-from network.networkNonStationary import Network
-from network.neuralN import DQN
+from src.network.netqueue import ExperienceQueue
+from src.network.networkNonStationary import Network
+from src.network.neuralN import DQN
 from sim_perf_collector import PerfCollector
-from network.globsim import SimGlobals as G
+from src.network import SimGlobals as G
 
 import wandb
 

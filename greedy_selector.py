@@ -1,5 +1,5 @@
 import numpy as np
-from network.globsim import SimGlobals as G
+from src.network import SimGlobals as G
 
 
 class GreedyBalancer:
@@ -40,7 +40,7 @@ class GreedyBalancer:
             self.non_greedy += 1
             return False, (None, None, None)
         self.greedy += 1
-        from pulp import LpProblem, LpMinimize, LpVariable, value
+        from pulp import LpProblem, LpMinimize, LpVariable
         prob = LpProblem("ResourceOptimization", LpMinimize)
 
         X0 = LpVariable("X0", lowBound=0, upBound=15, cat="Integer")
