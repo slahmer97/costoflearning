@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2023-12-11T10:16:27.818Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0" etag="DCrBFwkIp6MO9zw8tKu7" version="22.1.7" type="github">
+<mxfile host="app.diagrams.net" modified="2023-12-11T10:20:56.860Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0" etag="yImJOBBGW8_teiDSqk6y" version="22.1.7" type="github">
   <diagram name="Page-1" id="48yRJna23telFu0YNoEB">
-    <mxGraphModel dx="2074" dy="1031" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="1" shadow="0">
+    <mxGraphModel dx="830" dy="412" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="1" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -23,12 +23,14 @@
         <mxCell id="Teats__p5hXg-xirP8DH-3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#98fb98;strokeColor=default;" parent="1" vertex="1">
           <mxGeometry x="140" y="33" width="120" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="mz_4LwD43yJwQN2Mvcpe-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;curved=1;strokeWidth=0.5;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-4" target="mz_4LwD43yJwQN2Mvcpe-12">
+        <mxCell id="mz_4LwD43yJwQN2Mvcpe-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;curved=1;strokeWidth=0.5;endArrow=openThin;endFill=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-4" target="mz_4LwD43yJwQN2Mvcpe-12">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="170" y="153" />
               <mxPoint x="50" y="153" />
               <mxPoint x="50" y="300" />
+              <mxPoint x="130" y="300" />
+              <mxPoint x="130" y="292" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -262,10 +264,13 @@
         <mxCell id="mz_4LwD43yJwQN2Mvcpe-10" value="&lt;font style=&quot;font-size: 8px;&quot;&gt;\( \rho(t)\)&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;rotation=2;" vertex="1" parent="1">
           <mxGeometry x="281.75" y="309.25" width="41.5" height="23" as="geometry" />
         </mxCell>
-        <mxCell id="mz_4LwD43yJwQN2Mvcpe-12" value="state - \(s_t\)" style="rounded=1;whiteSpace=wrap;html=1;rotation=90;" vertex="1" parent="1">
-          <mxGeometry x="119" y="302.25" width="70" height="30" as="geometry" />
+        <mxCell id="mz_4LwD43yJwQN2Mvcpe-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;strokeWidth=0.5;endArrow=open;endFill=0;" edge="1" parent="1" source="mz_4LwD43yJwQN2Mvcpe-12" target="Teats__p5hXg-xirP8DH-41">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="mz_4LwD43yJwQN2Mvcpe-14" value="" style="endArrow=classic;html=1;entryX=0.75;entryY=1;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;exitX=0.25;exitY=1;exitDx=0;exitDy=0;curved=1;strokeWidth=0.5;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-5" target="Teats__p5hXg-xirP8DH-41">
+        <mxCell id="mz_4LwD43yJwQN2Mvcpe-12" value="state - \(s_t\)" style="rounded=1;whiteSpace=wrap;html=1;rotation=90;" vertex="1" parent="1">
+          <mxGeometry x="119" y="294.25" width="70" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="mz_4LwD43yJwQN2Mvcpe-14" value="" style="endArrow=open;html=1;entryX=0.75;entryY=1;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;exitX=0.25;exitY=1;exitDx=0;exitDy=0;curved=1;strokeWidth=0.5;endFill=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-5" target="Teats__p5hXg-xirP8DH-41">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="-20" y="213" as="sourcePoint" />
             <mxPoint x="30" y="163" as="targetPoint" />
@@ -275,15 +280,23 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="mz_4LwD43yJwQN2Mvcpe-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;curved=1;entryX=0.75;entryY=1;entryDx=0;entryDy=0;strokeWidth=0.5;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-3" target="mz_4LwD43yJwQN2Mvcpe-12">
+        <mxCell id="mz_4LwD43yJwQN2Mvcpe-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=1;entryX=0.888;entryY=0.993;entryDx=0;entryDy=0;strokeWidth=0.5;entryPerimeter=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;endArrow=openThin;endFill=0;" edge="1" parent="1" source="Teats__p5hXg-xirP8DH-3">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="126" y="148" as="sourcePoint" />
-            <mxPoint x="95" y="310" as="targetPoint" />
+            <mxPoint x="170" y="70" as="sourcePoint" />
+            <mxPoint x="139.21000000000004" y="327.4100000000001" as="targetPoint" />
             <Array as="points">
-              <mxPoint x="170" y="93" />
-              <mxPoint x="30" y="93" />
-              <mxPoint x="30" y="335" />
+              <mxPoint x="170" y="84" />
+              <mxPoint x="30" y="84" />
+              <mxPoint x="30" y="326" />
+              <mxPoint x="130" y="326" />
+              <mxPoint x="130" y="327" />
+              <mxPoint x="139" y="327" />
             </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="mz_4LwD43yJwQN2Mvcpe-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;strokeWidth=0.5;endArrow=open;endFill=0;" edge="1" parent="1" source="mz_4LwD43yJwQN2Mvcpe-12" target="Teats__p5hXg-xirP8DH-20">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="200" y="270" as="targetPoint" />
           </mxGeometry>
         </mxCell>
       </root>
