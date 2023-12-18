@@ -1,4 +1,4 @@
 defaults:
   - traffic: non-stationary-onoff
   - agent: dqn
-  - policy_selector: simple_selector
+  - policy_selector: dynamic_selector

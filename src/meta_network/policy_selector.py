@@ -29,34 +29,28 @@ class PolicySelector:
         raise NotImplementedError
 
 
+import csv
+
+
 class DynamicSelector(PolicySelector):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
         self.rho = kwargs.get("rho_init", 0.2)
+        self.rho_init = self.rho
         self.rho_max = kwargs.get("rho_max", 0.22)
         self.rho_min = kwargs.get("rho_min", 0.001)
-        self.increase_threshold = kwargs.get("increase_threshold", 0.001)
-        self.decrease_threshold = kwargs.get("decrease_threshold", -0.001)
+        self.gamma = kwargs.get("gamma", 0.95)
 
-        self.initial_threshold = kwargs.get("initial_threshold", 0.005)
-
-        self.gamma = 0.97
-        self.td_error_increase_rate = kwargs.get("td_error_increase_rate", 0.001)
-        self.td_error_decrease_rate = kwargs.get("td_error_decrease_rate", 0.01)
-        self.count = 0
-        self.cumulative_diff = 0.0
-        self.last_avg_td_error = None
-        self.last_avg_q1 = None
-        self.last_avg_q2 = None
-        self.last_avg_ql = None
-
-        self.avg_td_error_hist = deque(maxlen=1000)
-        self.avg_q1_hist = deque(maxlen=100)
-        self.avg_q2_hist = deque(maxlen=100)
-        self.avg_ql_hist = deque(maxlen=100)
-
-    def set_end(self):
-        self.rho = self.rho_min
+        self.window_size = kwargs.get("ma_tde_ws", 100)
+        self.td_errors_deque = deque(maxlen=self.window_size)
+        self.stde_deque = deque(maxlen=kwargs.get("stde_ws", 200))
+        self.last_action = None
+        self.counter = 0
+        self.update = 100
+        self.file = open(f"data/rho_evo-task-{kwargs.get('task_id')}.csv", "w")
+        self.writer = csv.writer(self.file)
+        self.writer.writerow(["derivative", "rho"])
 
     def choose_action(self, **kwargs):
         if np.random.random() < self.rho:
@@ -66,40 +60,29 @@ class DynamicSelector(PolicySelector):
         return self.last_action
 
     def push_stats(self, **kwargs):
-        self.count += 1
-        self.avg_td_error_hist.append(kwargs.get('td_error'))
-        if self.count % 750 == 0:
-            self._update_rho()
+        td_error = kwargs.get('td_error')
+        self.td_errors_deque.append(td_error)
+        stde = np.mean(self.td_errors_deque)
+        self.stde_deque.append(stde)
 
-    def _is_first(self):
-        return self.last_avg_td_error is None
+        self.counter += 1
 
-    def _detect_trend(self, new_avg):
+        if self.counter % self.update == 0:
+            self.adjust_rho()
 
-        immediate_diff = new_avg - self.last_avg_td_error
-        self.cumulative_diff += immediate_diff
-
-        if immediate_diff > self.initial_threshold:
-            self.cumulative_diff = 0
-            return 'increasing', immediate_diff
-        elif immediate_diff < -self.initial_threshold:
-            self.cumulative_diff = 0
-            return 'decreasing', immediate_diff
-        else:
-            return 'stable', immediate_diff
-
-    def _update_rho(self):
-        new_avg_td_error = np.mean(self.avg_td_error_hist)
-
-        if self.last_avg_td_error is not None:
-            td_error_trend, imm_diff = self._detect_trend(new_avg_td_error)
-
-            if td_error_trend == 'increasing':
-                self.rho = min(self.rho / self.gamma, self.rho_max)
-            elif td_error_trend == 'decreasing' or td_error_trend == "stable":
+    def adjust_rho(self):
+        derivative = 0
+        if len(self.stde_deque) >= 102:
+            # Compute the derivative of STDE
+            derivative = self.stde_deque[-1] - self.stde_deque[-101]
+            #print(f"Derivative: {derivative}")
+            # Adjust rho based on the derivative of STDE
+            if derivative <= 0.001:
                 self.rho = max(self.rho * self.gamma, self.rho_min)
-
-        self.last_avg_td_error = new_avg_td_error
+            else:
+                self.rho = min(self.rho / self.gamma, self.rho_max)
+        self.writer.writerow([derivative, self.rho])
+        self.file.flush()
 
 
 class SimpleSelector(PolicySelector):

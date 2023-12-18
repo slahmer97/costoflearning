@@ -32,17 +32,17 @@ def main(cfg: DictConfig) -> None:
     current_step = 0
     episodes = 500
     steps_per_episode = 1000
-    tasks_range = range(0, 1)
+    tasks_range = range(1, 2)
     header = ["episode", "reward", "q1", "q2", "rejection1", "drop2", "latency2", "tde", "rho"]
     for task_id in tasks_range:
-        filename = f"./data/task-{task_id}-1.csv"
+        filename = f"./data/dynamic-task-{task_id}-0.csv"
         fo = open(filename, "w")
         writer = csv.writer(fo)
         writer.writerow(header)
         task = task_sampler.get_task(task_id)
         task["cost_weights"] = [0.5, 0.5]
         greedy_policy = GreedyPolicy()  # OnlyLearningPlanePolicy() #GreedyPolicy()
-        policy_selector = get_policy_selector(**cfg["policy_selector"])
+        policy_selector = get_policy_selector(**cfg["policy_selector"], task_id=task_id)
         buffer = ReplayBuffer0(input_shape=6, max_size=10000, batch_size=cfg["agent"]["batch_size"])
         learning_queue = ExperienceQueue(**learning_queue_config)
         dqn = DQN(**cfg["agent"])
@@ -53,16 +53,18 @@ def main(cfg: DictConfig) -> None:
         track_q1_drp = deque(maxlen=1000)
         track_q2_drp = deque(maxlen=1000)
         track_q2_latency = deque(maxlen=1000)
-        dqn.eval_net.load_me("./model-history/e-task-{}-episode{}".format(0, 80))
-        dqn.target_net.load_me("./model-history/t-task-{}-episode{}".format(0, 80))
+        dqn.eval_net.load_me("./model-history/dynamic-e-task-{}-episode{}".format(0, 70))
+        dqn.target_net.load_me("./model-history/dynamic-t-task-{}-episode{}".format(0, 70))
         for episode in range(episodes):
             #if episode == 3 or (task_id == 0 and episode == 0):
             #    greedy_policy = GreedyPolicy()  # OnlyLearningPlanePolicy() #GreedyPolicy()
             #    policy_selector = get_policy_selector(**cfg["policy_selector"])
             #    dqn = DQN(**cfg["agent"])
             if episode % 10 == 0:
-                dqn.eval_net.save_me("./model-history/dup-e-task-{}-episode{}".format(task_id, episode))
-                dqn.target_net.save_me("./model-history/dup-t-task-{}-episode{}".format(task_id, episode))
+                dqn.eval_net.save_me("./model-history/dynamic-e-task-{}-episode{}".format(task_id, episode))
+                dqn.target_net.save_me("./model-history/dynamic-t-task-{}-episode{}".format(task_id, episode))
+#            dqn.eval_net.save_me("./model-history/dynamic-e-task-{}-episode{}".format(task_id, episode))
+#            dqn.target_net.save_me("./model-history/dynamic-t-task-{}-episode{}".format(task_id, episode))
 
             cum_reward = 0
             loss = 0

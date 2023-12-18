@@ -87,12 +87,12 @@ combined_data = pd.DataFrame()
 # Iterate through each file in the directory and combine data
 dirs = sorted(os.listdir(directory))
 for filename in dirs:
-    if filename.startswith('task') and filename.endswith('.csv'):
+    if filename.startswith('dynamic-task') and filename.endswith('.csv'):
         file_path = os.path.join(directory, filename)
         task_data = pd.read_csv(file_path)
         task_data['performance'] = (task_data['reward'] + 250) / 250
         # Extract the task ID from the filename and add it as a column
-        task_id = int(re.search(r'task-(\d+)-0\.csv', filename).group(1))
+        task_id = int(re.search(r'dynamic-task-(\d+)-0\.csv', filename).group(1))
         print(task_id, task_data["performance"].mean())
         print(f"task-id={task_id}\n"
               f"\tperf={task_data['performance'].mean()}\n"
@@ -116,7 +116,7 @@ ema_span = 40  # Define the span for EMA calculation, adjust as needed
 combined_data['performance_ema'] = combined_data['performance'].ewm(span=30, adjust=False).mean()
 combined_data['q1_ema'] = combined_data['q1'].ewm(span=5, adjust=False).mean()
 combined_data['q2_ema'] = combined_data['q2'].ewm(span=5, adjust=False).mean()
-combined_data['tde_ema'] = combined_data['tde'].rolling(window=10).mean()
+combined_data['tde_ema'] = combined_data['tde']#.rolling(window=10).mean()
 
 # Plot the EMA of the performance metric
 axs[1].plot(combined_data['performance_ema'], label='Reward', color='forestgreen')
